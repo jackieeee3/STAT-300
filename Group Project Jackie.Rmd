@@ -1,0 +1,200 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Logan wants to open a baby store chain with the hope of expanding his business overseas. He is interested in finding out whether the average sales are associated with the characteristics of the store location. To understand this relationship, he gathered data on car seat sales for 500 locations. Attributed include:
+
+### Sales - Sales (in thousands of dollars at each location)
+
+### Prices - Price company charges for car seats at each site
+
+### CompPrice - Price charged by competitor at each location
+
+### Income - Median income in the community (in 1000's of dollars)
+
+### Education - Education level at the location
+
+### Age - Average age of the local population
+
+### Advertising - Local advertising budget for company at each location (in thousands of dollars)
+
+### Accidents - Average monthly accidents in the area
+
+### Urban - A factor with levels: 0 and 1 to indicate whether the store is in an urban or rural location (1 if urban, 0 if rural)
+
+### US - A factor with levels 0 and 1 to indicate whether the store is in the US or not (1 if in US, 0 if other)
+
+### ShelveLoc - A factor with levels Bad, Good and Medium indicating the quality of the shelving location for the car seats at each site
+
+### Logan is seeking your assisstance to build a model to make inferences and predictions about the car seat sales. To achieve this goal, you are expected to do below:
+
+### (1). First, you are going to split the dataset into two: training and testing set. Use 400 observations in the dataset to train your models and remaining 100 to validate the prediction performance. When subsampling 400 observations for the training data, I want you to use a random seed. This random seed MUST have the format "300GroupNo". For instance, if your group is 1, then your random seed should be 30001. If your group number is 11, then your random seed should be 30011, etc. Remember, for descriptive analysis as well as for developing the model, you are going to use your training set only. You will use the testing set to validate the prediction performance of the developed model
+
+### You may adapt a code like below to split the data into testing and training set
+
+```{r}
+#Load the necessary packages
+if (!require(readxl)) install.packages("readxl")
+if (!require(MASS)) install.packages("MASS")
+if (!require(leaps)) install.packages("leaps")
+if (!require(corrplot)) install.packages("corrplot")
+
+#Loading packages
+library(readxl)
+library(MASS)
+library(leaps)
+library(corrplot)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(leaps)
+
+#retrieve data
+Cseat = read.csv("carseat.csv")
+
+#Setting the random seed
+group_number = 1 
+set.seed(30000+group_number)
+
+#Decide which records to keep in the training set
+trainRec = sort(sample(1:nrow(Cseat), size = 400))
+
+#Extract indexes that are not in the trainRec as test records
+testRec = setdiff(1:nrow(Cseat), trainRec)
+
+#Extract the index rows in the trainRec and keep them in the training set
+trainSeat = Cseat[trainRec, ]
+
+#Extract indexed rows from testRec and keep them in the test set
+testSeat = Cseat[testRec, ]
+```
+
+### (2) You should pick a model using variable selection approaches such as stepwise, best subset with different information criteria such as AIC, BIC, etc. To pick the model, you are going to use your training set. You must clearly justify the reason for your suggested model, which include model assumptions as well.
+
+
+```{r}
+#Conversion of categorical variable data
+trainSeat$Urban = as.factor(trainSeat$Urban)
+trainSeat$US = as.factor(trainSeat$US)
+trainSeat$ShelveLoc = as.factor(trainSeat$ShelveLoc)
+
+#Plotting the correlation matrix between variables
+CseatCorMat = cor(trainSeat[, sapply(trainSeat, is.numeric)])
+corrplot(CseatCorMat, method = "number")
+```
+
+```{r}
+#MLR-null Model
+nullModel = lm(Sales ~ 1, data = trainSeat) #The model has only intercept
+#full-model
+fullModel = lm(Sales ~ Price + CompPrice + Income + Education + Age + Advertising + Accidents + Urban + US + ShelveLoc, data = trainSeat)
+```
+
+```{r}
+##AIC
+#forward(AIC)
+stepForwardAIC = step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = "forward", k = 2)
+summary(stepForwardAIC)
+aic_value1=AIC(stepForwardAIC)
+```
+
+```{r}
+#BACK(AIC)
+stepBackwardAIC = step(fullModel, scope = list(lower = nullModel, upper = fullModel), direction = "backward", k = 2)
+summary(stepBackwardAIC)
+aic_value2=AIC(stepBackwardAIC)
+```
+
+```{r}
+#bI(AIC)
+stepBothAIC = step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = "both", k = 2)
+summary(stepBothAIC)
+aic_value3 = AIC(stepBothAIC)
+```
+
+```{r}
+##BIC
+#forward(BIC)
+stepForwardBIC = step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = "forward", k = log(nrow(trainSeat)))
+summary(stepForwardBIC)
+bic_value1=BIC(stepForwardBIC)
+```
+
+```{r}
+forward_BIC_model <- lm(formula = Sales ~ ShelveLoc + Price + Advertising + Education, data = trainSeat)
+forward_BIC_res <- resid(forward_BIC_model)
+plot(fitted(forward_BIC_model), forward_BIC_res)
+abline(h = 0, col = 'red')
+qqnorm(forward_BIC_res)
+qqline(forward_BIC_res, col = 'red')
+```
+### Linearity: The residuals are randomly scattered around the zero horizontal line and shows no clear pattern. Therefore, we can assume linearity
+
+### Independence: 
+
+### Normality: Based on the QQ plot, the points lie along the reference line so we can assume normality
+
+### Equal Variance: The residuals are randomly scattered within a constant band so we can assume equal variance
+
+```{r}
+#back(BIC)
+stepBackwardBIC = step(fullModel, scope = list(lower = nullModel, upper = fullModel), direction = "backward", k = log(nrow(trainSeat)))
+summary(stepBackwardBIC)
+bic_value2=BIC(stepBackwardBIC)
+```
+
+```{r}
+#BI(BIC)
+stepBothBIC = step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = "both", k = log(nrow(trainSeat)))
+summary(stepBothBIC)
+bic_value3=BIC(stepBothBIC)
+```
+
+```{r}
+# Best subset method
+best_subset <- regsubsets(Sales ~ ., data = trainSeat, nbest = 1)
+summary(best_subset_model)
+subset <- lm(formula = Sales ~ Price + Education + Advertising + ShelveLoc, data = trainSeat)
+summary(subset)
+```
+
+```{r}
+# Using ANOVA to compare the performance of different models
+anova_result_1=anova(stepForwardAIC, stepBackwardAIC, stepBothAIC)
+anova_result_2=anova(stepForwardBIC, stepBackwardBIC, stepBothBIC)
+
+# Print ANOVA results
+print(anova_result_1)
+print(anova_result_2)
+```
+
+```{r}
+#Choosing a more concise model,the forward approach(BIC)
+final_model = stepForwardBIC
+
+#Clarification of important variables
+important_vars = names(final_model$coefficients)[-1]
+cat("important variable:\n")
+print(important_vars)
+
+#Predictive Test Sets
+predictions = predict(final_model, newdata = testSeat)
+
+#Calculation of forecast error
+errors = testSeat$Sales - predictions
+mse = mean(errors^2) #MSE（mean square error）
+rmse = sqrt(mse) #RMSE（rms error）
+mae = mean(abs(errors)) #MAE（Average absolute error）
+
+#Print assessment indicators
+cat("Mean Squared Error (MSE):", mse, "\n")
+cat("Root Mean Squared Error (RMSE):", rmse, "\n")
+cat("Mean Absolute Error (MAE):", mae, "\n")
+
+#Plotting scatterplots of predicted versus actual values
+plot(testSeat$Sales, predictions, xlab = "Actual sales (thousands of dollars)", ylab = "Forecasted sales (thousands of dollars)", main = "Actual sales vs Forecasted sales")
+abline(a = 0, b = 1, col = "red")
+length(testSeat$Sales)
+length(predictions)
+```
