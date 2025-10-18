@@ -1,0 +1,235 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Question 1: A Clothing data set in R package Stat2Data contains data from a random sample of 60 customers from a large clothing store. The store manager is interested in understanding how much a customer will spend on his or her new purchase based on available characteristics.
+
+### The data dictionary is as follows:
+
+### ID - Customer ID
+
+### Amount - Net dollar amount spent by customers in their latest purchase from this retailer
+
+### Recency - Number of months since the last purchase
+
+### Freq12 - Number of purchases in the last 12 months
+
+### Dollar12 - Dollar amount of purchases in the last 12 months
+
+### Freq24 - Number of purchases in the last 24 months
+
+### Dollar24 - Dollar amount of purchases in the last 24 months
+
+### Card - whether or not the customer has a private-label credit card with the retailer (1-yes, 0-no)
+
+### (a). Install the R package and access the Clothing data. Print the first 5 lines of your data
+
+```{r}
+library(Stat2Data)
+data(Clothing)
+head(Clothing, n = 5)
+```
+### (b). The manager mentioned that if the customers purchased the items and then returned them, the net dollar amount spent by customers in their latest purchase will be marked as zero. He said he is not interested in returns, so we should remove such customers from the analysis. Identify the customers who have returned their purchases, and remove them from the data. How many customers are remaining in your data after removing these customers? You may use the subset() function and dim() function to answer this question. You will be moving forward with this reduced dataset
+
+```{r}
+new_clothing <- subset(Clothing, Amount != 0)
+dim(new_clothing)
+print(new_clothing)
+```
+### 57 customers are remaining in the dataset after removing the customers who have returned items.
+
+### (c). Remove the ID column from the data as it is not a variable and simply an identifier for subjects. Show the first 5 observations after removing ID column
+
+```{r}
+library(dplyr)
+library(corrplot)
+clothing <- select(new_clothing, -ID)
+head(clothing, n = 5)
+```
+### (d). Obtain the correlation matrix and the scatterplot matrix. Comment on your observations
+
+```{r}
+print(clothing)
+cor_matrix <- cor(clothing, method = 'pearson')
+corrplot(cor_matrix, method = 'number')
+pairs(clothing[, c('Amount', 'Recency', 'Freq12', 'Dollar12', 'Freq24', 'Dollar24', 'Card')])
+```
+### (e). Are there any predictors that are correlated with other predictors? If so, what are those predictors that can potentially create a multicollinearity issue in a fitted model
+
+### Predictors that can potentially create a multicollinearity issue are:
+
+### 1. Dollar12 and Dollar24
+
+### 2. Freq12 and Freq24
+
+### (f). Use the best subset method with BIC to come up with a reasonable model. What are the predictors suggested to be included in the model
+
+```{r}
+### Subset method with BIC
+nullModel <- lm(Amount ~ 1, data = clothing)
+fullModel <- lm(Amount ~ Recency + Freq12 + Dollar12 + Freq24 + Dollar24 + Card, data = clothing)
+step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = 'both', k = log(nrow(clothing)))
+```
+### The predictors suggested to be included in the model are Dollar24, Freq24, and Card
+
+### (g). Once the model in part (f) was presented to the manager, he suggested including Freq12 instead of Freq24 and Dollar 12 instead of Dollar24 as they are highly correlated. Obtain the least squares regression line to explain net dollar amount spent by customers in their last purchase using Dollar12, Freq12, and Card. Write down the estimated equation for this model
+
+```{r}
+best_model <- lm(Amount ~ Dollar24 + Freq24 + Card, data = clothing)
+manager_model <- lm(Amount ~ Dollar12 + Freq12 + Card, data = clothing)
+print(best_model)
+print(manager_model)
+```
+### The equation for this model is Amount = 302.5(Dollar12) - 17782(Freq12) - 58921.7(Card) - 17258.5
+
+### (h). Obtain the model diagnostics for the 3 predictor model. Discuss the validity of the model assumptions and presence of any unusual points. If you have unusual points also see if any of them could be influential
+
+```{r}
+library(ggplot2)
+cooks_distances <- cooks.distance(manager_model)
+influential_points <- which(cooks_distances > 1)
+print(influential_points)
+manager_res <- resid(manager_model)
+plot(fitted(manager_model), manager_res)
+abline(h = 0, col = "red")
+```
+### The 60th observation of the original dataset has a Cook's Distance of 57, which definitely makes it an influential point
+
+### Linearity: Based on the residuals plot, the points are not randomly scattered. There is a clear negative linear reltaionship and an extreme point, violating the linearity assumption
+
+### Independence: It is mentioned that the data was from a random sample of 60 customers from a large clothing store, so we can assume independence
+
+```{r}
+qqnorm(manager_res)
+qqline(manager_res, col = 'red')
+```
+### Normality: Most of the points are along the reference line but a few points deviate away from the line, suggesting that the data is skewed. Therefore, the normality assumption is violated
+
+### Equal Variance: Based on the residual plot, the points are not randomly scattered and follow a clear pattern. Therefore, the equal variance assumption is violated
+
+### (i). A quick consultation with the manager revealed that the data record indicating a customer has spent $1,506,000 in the store is a data entry error and therefore should be removed from the analysis. Remove this data point. How many records are in your dataset now?
+
+```{r}
+new_clothing <- clothing[clothing$Amount != 1506000, ]
+print(new_clothing)
+```
+### There are now 56 records in the dataset
+
+### (j). During the discussion, it was also decided that the average amount spent on each visit by the customer would be a better predictor to consider than total dollar amount of purchases. Therefore, instead of using Freq12 and Dollar12 as predictors, it was decided to use $AvgSpent12 = \frac{Dollar12}{Freq12}$. Keep in mind that when constructing the new variable, you will need to pay attention to limitations in the data that could cuse potential issues (for example, what if you divide by zero). After removing any records that may create such issues, how many records do you have in the data now? Print the first 3 observations of the data with the newly created variable
+
+```{r}
+avg_clothing <- new_clothing[new_clothing$Freq12 != 0, ]
+avg_clothing <- avg_clothing %>%
+  mutate(AvgSpent12 = Dollar12 / Freq12)
+head(avg_clothing, n = 3)
+```
+### There are now 52 records in the data.
+
+### (k). Re-fit the model with predictors AvgSpent12 and Card, and obtain the model diagnostics for the 2-predictor model. Discuss the validity of the model assumptions and presence of any unusual points
+
+```{r}
+print(avg_clothing)
+avg_model <- lm(Amount ~ AvgSpent12 + Card, data = avg_clothing)
+print(avg_model)
+```
+### The equation is Amount = 1.419(AvgSpent12) + 7.541(Card) - 39.665
+
+```{r}
+avg_res <- resid(avg_model)
+plot(fitted(avg_model), avg_res)
+abline(h = 0, col = "red")
+```
+### Linearity: Although there is a cluster of points, the points seem to be randomly scattered within a constant band so we can assume linearity
+
+### Independence: Once again, it is mentioned that the data was from a random sample of 60 customers from a large clothing store, so we can assume independence
+
+```{r}
+qqnorm(avg_res)
+qqline(avg_res, col = 'red')
+```
+### Normality: Based on the QQ plot, most of the points seem to lie along the reference line but once again, there are a few points deviating away from the line, suggesting that the data is skewed
+
+### Equal Variance: Based on the residual plot, the points seem to be randomly scattered so we can assume equal variance
+
+### (l). Take the natural log transformation of both the AvgSpent12 and Amount. Fit a model of log(Amount) on log(AvgSpent12) and Card. Label the 2-predictor model as $M_1$. Discuss the validity of the model assumptions and presence of any unusual points for $M_1$.
+
+```{r}
+log_model <- lm(log(Amount) ~ log(AvgSpent12) + Card, data = avg_clothing)
+print(log_model)
+```
+```{r}
+log_res <- resid(log_model)
+plot(fitted(log_model), log_res)
+abline(h = 0, col = "red")
+```
+### Linearity: Based on the residual plot, the points seem to be randomly scattered within a constant band, so we can assume linearity
+
+### Independence: Once again, it is mentioned that the data was from a random sample of 60 customers from a large clothing store, so we can assume independence
+
+```{r}
+qqnorm(log_res)
+qqline(log_res, col = 'red')
+```
+### Normality: The points seem to follow the reference line so we can assume normality
+
+### Equal Variance: Based on the residual plot, the points seem to be randomly scattered so we can assume equal variance
+
+### (m). Write down the estimated equation for model $M_1$. Are there any predictors that we can remove at 5% level? If so, what are they? Explain your reasoning.
+
+### The estimated equation for $M_1$ is log(Amount) = 1.12781(log(AvgSpent12)) + 0.08471(Card) - 0.64269
+
+```{r}
+summary(log_model)
+```
+### We can remove the predictor variable Card because its p-value is greater than 0.05, making it not statistically significant
+
+### (n). Interpret the estimated coefficient for variable Card in the context of the problem
+
+### In the context of the problem, the estimated coefficient for the variable Card means that for cardholers, their amount spent is expected to increase 0.08471 since Card can only take on values 1 or 0
+
+### (o). Model the log-transformed response using only the log transformed AvgSpent12. Label this model as $M_2$. Would you prefer model $M_2$ over model $M_2$? Explain your answer.
+
+```{r}
+avglog_model <- lm(log(Amount) ~ log(AvgSpent12), data = avg_clothing)
+summary(avglog_model)
+```
+### Yes, I would prefer the model $M_2$ over the model $M_1$ because removing the variable Card does not make much of a difference as both model's R-squared value is relatively the same and the variable log(AvgSpent12) is statistically significant
+
+### Question 2: State if the statements below are true or false
+
+### (a). Randomly selecting units from populations and performing an ANOVA allows you to generalize the findings to the populations where the data came from
+
+### True. The process of random sampling reduces bias and helps to make sure that the sample is representative of the population
+
+### (b). In the datasets in which there is no random selection, we can generalize the findings from the ABOVA results to the population
+
+### False. Without random sampling, there is risk of bias and the data from the sample may not be representative of the population
+
+### (c). If the dataset does not meet the independence conditions for the ANOVA model, a transformation can improve this
+
+### False. Although transformations on the data can improve normality and equal variance, it does not change independence if the samples were not collected using random sampling
+
+### Question 3: The main purpose of a one-way ANOVA model is to learn about:
+### (a) the variances of several groups.
+### (b) the means of several groups
+### (c) the mean of one group
+### (d) the variance of one group
+
+### Answer: (b) the means of several groups
+
+### Question 4: Which of the following is not a condition of the ANOVA model
+### (a) Error terms have the same standard deviation.
+### (b) Error terms are all positive
+### (c) Error terms are independent
+### (d) Error terms follow a normal distribution
+
+### Answer: (b) Error terms are all positive
+
+### Question 5: The best two plots to check the validity of ANOVA assumptions are:
+### (a) Bar chart of explanatory groups and normal probability plot.
+### (b) Normal probability plot of the residuals and scatterplot of residuals vs. fitted values.
+### (c) Normal probability plot of the residuals and dotplot of the residuals.
+### (d) Scatter plot of the response vs. predictor and dotplot of residuals.
+
+### Answer: (b) Normal probability plot of the residuals and scatterplot of residuals vs. fitted values.
