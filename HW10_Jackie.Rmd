@@ -1,0 +1,175 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Automobile manufacturer is exploring designs for water pumps for their off-road vehicles. They have been looking into four prototypes designed by two companies. Twelve pumps of each design have been randomly installed and tested in four-wheel-drive vehicles and the number of miles driven before the failure of water pumps were recorded.
+
+### The company is specifically interested in getting answers to below research questions
+
+### I. Whether or not the average mileage until failure is different in four brands
+
+### II. Designs 1 and 2 were presented by company A whereas Designs 3 and 4 by company B. Does the average mileage at failure differ by the company
+
+### III. Is the average mileage at failure different for the two designs, within each company?
+
+### Below is a set of questions that will help you to answer above research questions
+
+### (a). What is the response variable and what is the explanatory variable?
+
+### The response variable is miles until failure and the explanatory variable is the the design
+
+### (b). What are the treatments in this study?
+
+### The treatments are the water pumps. There are Designs 1 and 2 made by Company A and Designs 3 and 4 made by Company B.
+
+### (c). Below provided is a graph related to the study. Comment on your observations. 
+
+```{r}
+library(dplyr)
+```
+
+```{r image1, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework #10.png")
+```
+### Based on the graph, the variability in all 4 designs seem to be relatively the same. However, the mileage for Design 1 exceeds the others by a wide margin. 
+
+### (d). Whatever the differences you are observing above, your client wants to know if this simply could have happened by chance. To answer this, what is the model you think would explain the relationship between the two variables in the target population. Clearly define any terms you may have used.
+
+### $y_{ij} = \mu + \alpha_i + \epsilon_{ij}$ where
+
+### $y_{ij}$ is the mileage until failure for the jth vehicle with ith design
+
+### $\mu$ is the overall mean
+
+### $\alpha_i$ is the effect of the ith design
+
+### $\epsilon_{ij}$ is the random error associated with the jth vehicle for the ith design
+
+### (e). Carry out an appropriate test to see whether or not the average mileage until failure is different in four brands.
+
+### (i). Set up appropriate null and alternative hypothesis
+
+### $H_0: \mu_1 = \mu_2 = \mu_3 = \mu_4$
+
+### $H_1: \text{At least one } \mu_i \neq \mu_j$
+
+### (ii). Below provided is a partial ANOVA table. Use the information provided to you to complete the ANOVA table. Show your work to get the values in (A)-(H)
+
+```{r image2, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework #10 #2.png")
+```
+### (A). Group df = k - 1 = 4 - 1 = 3
+
+### (B). Residual df = Total df - Group df = 47 - 3 = 44
+
+### (C). Total df = n - 1 = 48 - 1 = 47
+
+### (D). Sum of Squares Residuals = Residual df * Mean Squares Residual = 44 * 136626 = 6011544
+
+### (E). Sum of Squares Total = Sum of Squares Group + Sum of Squares Residual = 341757430 + 6011544 = 347768974
+
+### (F). Mean Squares Group = Sum of Squares Group / Group df = 341757430 / 3 = 113919143
+
+### (G). F-Test = Mean Squares Group / Mean Squares Residual = 113919143 / 136626 = 834
+
+### (H). P-value = pf(834, 3, 44, lower.tail = FALSE) = $9.003541 \times 10^{39}$
+
+```{r}
+pf(834, 3, 44, lower.tail = FALSE)
+```
+### (iii). Below are some graphs relevant as you check the assumptions. Use the provided graphs to comment on the assumptions.
+
+```{r image3, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework #10 #3.png")
+```
+### We can assume assume linearity and equal variance as the points in the residual plot are scattered within a constant band and there is no noticeable pattern. From the QQ plot, we can assume normality as the points roughly follow the reference line. We can assume independence as the water pumps were randomly installed and tested in four-wheel-drive vehicles.
+
+### (iv). Regardless of your opinion on the validity of the assumptions, write the conclusion in the context of the research question.
+
+### Based on the ANOVA table and the assumptions, we reject the null hypothesis which means that at least one of the designs is different
+
+### (v). Which research question: I, II, or III is answered by the test you conducted in questions (i) through (iv) in part (e)?
+
+### Question I
+
+### (f). Here are some outputs that will be helpful for answering reearch questions II and II above.
+
+```{r image4, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework #10 #4.png")
+```
+### (i) Set up the correct contrasts relevant to answering the research questions.
+
+### Question II
+
+### $H_0: \frac{(\mu_1 + \mu_2)}{2} - \frac{(\mu_3 + \mu_4)}{2} = 0$
+
+### $H_1: \frac{(\mu_1 + \mu_2)}{2} - \frac{(\mu_3 + \mu_4)}{2} \neq 0$
+
+### Question III
+
+### $H_0: \mu_1 - \mu_2 = 0$
+
+### $H_1: \mu_1 - \mu_2 \neq 0$
+
+### $H_0: \mu_3 - \mu_4 = 0$
+
+### $H_1: \mu_3 - \mu_4 \neq 0$
+
+### (ii). Write down the sample contrasts/point estimators relevant for part (i)
+
+### $\frac{\bar{y_{1.}} + \bar{y_{2.}}}{2} - \frac{\bar{y_{3.}} + \bar{y_{4.}}}{2}$
+
+### $\bar{y_{1.}} - \bar{y_{2.}}$
+
+### $\bar{y_{3.}} - \bar{y_{4.}}$
+
+### (iii). Calculate the adjusted CIs relevant for contrasts you set up above. Do the calculations by hand by typing up the work
+
+### First Contrast
+
+### Confidence Interval: $(\frac{\bar{y_{1.}} + \bar{y_{2.}}}{2} - \frac{\bar{y_{3.}} + \bar{y_{4.}}}{2}) \pm t_{0.025, 44} \sqrt{\text{MSE} \sum\limits_{i=1}^4 \frac{c_i^2}{n_i}}$ where
+
+### $\frac{\bar{y_{1.}} + \bar{y_{2.}}}{2} - \frac{\bar{y_{3.}} + \bar{y_{4.}}}{2} = \frac{31006.51 + 24968.01}{2} - \frac{24073.46 + 26462.88}{2} = 27987.26 - 25268.17 = 2719.09$
+
+### $t_{0.025, 44} = 2.015368$
+
+### $\sqrt{\text{MSE} \sum\limits_{i=1}^4 \frac{c_i^2}{n_i}} =  \sqrt{136626(\frac{(\frac{1}{2})^2}{12} + \frac{(\frac{1}{2})^2}{12} + \frac{(-\frac{1}{2})^2}{12} + \frac{(-\frac{1}{2})^2}{12})}$
+
+### $= \sqrt{136626(\frac{\frac{1}{4}}{12} + \frac{\frac{1}{4}}{12} + \frac{\frac{1}{4}}{12} + \frac{\frac{1}{4}}{12})} = \sqrt{136626(\frac{1}{48} + \frac{1}{48} + \frac{1}{48} + \frac{1}{48})} = \sqrt{136626(\frac{4}{48})}$
+
+### $= \sqrt{11386} = 106.7$
+
+### so we have $2719.09 \pm 2.015368 * 106.7 = (2934, 2504)$
+
+### Second Contrast
+
+### Confidence Interval: $\bar{y_{1.}} - \bar{y_{2.}} \pm t_{0.025, 44} \sqrt{\text{MSE} \sum\limits_{i=1}^2 \frac{c_i^2}{n_i}}$ where
+
+### $\bar{y_{1.}} - \bar{y_{2.}} = 6038.5$
+
+### $t_{0.025, 44} = 2.015368$
+
+### $\sqrt{\text{MSE} \sum\limits_{i=1}^2 \frac{c_i^2}{n_i}} = \sqrt{136626(\frac{1^2}{12} + \frac{1^2}{12})} = \sqrt{136626(\frac{2}{12})} = 151$
+
+### so we have $6038.5 \pm 2.015368 * 151 = (6343, 5734)$
+
+### Third Contrast
+
+### Confidence Interval: $\bar{y_{3.}} - \bar{y_{4.}} \pm t_{0.025, 44} \sqrt{\text{MSE} \sum\limits_{i=3}^4 \frac{c_i^2}{n_i}}$ where
+
+### $\bar{y_{3.}} - \bar{y_{4.}} = -2389.42$
+
+### $t_{0.025, 44} = 2.015368$
+
+### $\sqrt{\text{MSE} \sum\limits_{i=3}^4 \frac{c_i^2}{n_i}} = \sqrt{136626(\frac{1^2}{12} + \frac{1^2}{12})} = \sqrt{136626(\frac{2}{12})} = 151$
+
+### so we have $-2389.42 \pm 2.015368 * 151 = (-2085, -2694)$
+
+### (g). Below provided are some R outputs. Use them to verify the calculations you did in part (ii). Clearly state which output and which interval you used to verify your calculations.
+
+```{r image5, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework #10 #5.png")
+```
+### I used Fisher's LSD to calculate the confidence intervals. The output corresponding to that is Output A
+
