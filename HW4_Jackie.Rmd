@@ -1,0 +1,177 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Question 1: For each of the below, state if it is true or false. If it is false, explain the reason.
+
+### (a). If a dataset A has a larger correlation between Y and X than dataset B, then the slope between Y and X for dataset A will be larger than the slope between Y and X for dataset B.
+
+### False. The simple linear regression model is the equation $$ Y = \beta_0 + \beta_1 X $$ where slope is \(\beta_1 = r \frac{S_Y}{S_X}\). r is the correlation coefficient, $S_Y$ is the standard deviation of Y and $S_X$ is the standard deviation of X. Scaling the y-values in the data by a factor of k will change the standard deviation but not correlation which the slope depends on. Having a higher number multiplied by the correlation results in a larger slope. Also, you could have data that has a steeper line but a worse fit (points are far away from the regression line) and data that has a shallower line but a better fit (points are closer to the regression line). 
+
+```{r}
+x1<-c(1,3,5,7,9)
+x2 <- c(2,4,6,8,10)
+y1 <- 3*x1 + rnorm(5,0,1)
+y2 <- 10 + 6*x2 + rnorm(5,0,10)
+
+plot(x2,y2, col="red", pch=16, xlim=c(0,10), ylim=c(0,80), xlab="x", ylab="y")
+points(x1,y1, col="blue", pch=16)
+abline(lm(y1~x1), col="blue")
+abline(lm(y2~x2), col="red")
+
+text(2,40,paste("Correlation =",round(cor(x2,y2), digits = 3)))
+text(6,5,paste("Correlation =",round(cor(x1,y1), digits = 3)))
+text(2,45,paste("Slope =",round(coef(summary(lm(y2~x2)))["x2", "Estimate"], digits = 3)))
+text(6,10,paste("Slope =",round(coef(summary(lm(y1~x1)))["x1", "Estimate"], digits = 3)))
+```
+### (b). The model degrees of freedom is always 1 for simple linear regression.
+
+### True. For simple linear regression, we have two parameters (intercept and slope). The intercept does not contribute to the degrees of freedom because it is not associated with the variability explained by the predictors.
+
+### (c). The magnitude of the multiplier $t_{\frac{\alpha}{2}}, (n - 2)$ used to compute the confidence interval for the slope of a regression line decreases as the sample size increases.
+
+### True. In a smaller sample size, the t-distribution has heavier tails so the t-value is larger to account for uncertainty. As the sample size n increases, the t-distribution approaches the standard normal distribution, resulting in a smaller t-value.
+
+### (d). The unexplained variation (SSE) is always smaller than the explained variation (SSModel).
+
+### False. When the model fits the data well, SSModel > SSE. When the model fits the data poorly, SSModel < SSE.
+
+### (e). If the correlation between X1 and Y is greater (in magnitude) than the correlation between X2 and Y, then the coefficient of determination of the regression model of Y on X1 is greater than the coefficient of determination of the regression model of Y on X2.
+
+### True. For simple linear regression, $R^2$ is the square of the correlation coefficient between X and Y. If the correlation between X1 and Y is greater in magnitude than the correlation between X2 and Y, then the coefficient of determination $R^2$ will also be greater for the regression of Y on X1 than the regression of Y on X2.
+
+### Question 2: A regression equation was fit to a dataset for which the correlation r between X and Y was 0.6. Which of the following must be true?
+
+### (a). The slope of the regression line is 0.6
+
+### False. The slope \(\beta_1 = r \frac{S_Y}{S_X}\) is not equal to the correlation coefficient itself.
+
+### (b). The regression model explains 60% of the variability in Y.
+
+### False. The percentage of variability explained by the regression model is calculated by the coefficient of determination $R^2$ = $r^2$.
+
+### (c). The regression model explains 36% of the variability in Y/.
+
+### True. $R^2$ = $r^2$ = (0.6)^2 = 0.36 = 36%
+
+### (d). At least half of the residuals are smaller than 0.6 in the absolute value
+
+### False. You cannot determine the distirbution of the residuals based off just the correlation coefficient
+
+### Question 3: The data TxtPrc.csv file has information for a random sample of 30 textbooks from Cal Poly campus bookstore. Suppose a student is interested inpredicting the price based on the number of pages in the book.
+
+### (a). Make a scatterplot to display the relationship. Comment on your observations.
+
+```{r}
+read.csv(file = "TxtPrc.csv")
+textbooks <- read.csv(file = "TxtPrc.csv")
+ggplot(data = textbooks, aes(x = Pages, y = Price)) + geom_point() + geom_smooth(method = 'lm')
+```
+### There seems to be a moderate to strong positive correlation between the two variables.
+
+### (b). Obtain the least squares regression model for predicting the price from the number of pages.
+
+```{r}
+lm(formula = Price ~ Pages, data = textbooks)
+model <- lm(formula = Price ~ Pages, data = textbooks)
+```
+### (c). Write the equation of the least squares regression line.
+
+### y = 0.1473x - 3.4223
+
+### (d). Calculate the standardized residuals and store the residuals. Call it TxtStdResid.
+
+```{r}
+TxtStdResid <- rstandard(model)
+```
+
+### (e). Make a plot of standardized residuals vs. fitted values and the normal QQ plot of the standardized residuals
+
+```{r}
+ggplot(data.frame(fitted = fitted, residuals = TxtStdResid), aes(x = fitted, y = residuals)) + geom_point() + geom_hline(yintercept = 0, linetype = "dashed") + labs(x = "Fitted Values", y = "Standardized Residuals", title = "Standardized Residuals vs Fitted Values")
+```
+```{r}
+qqnorm(TxtStdResid)
+qqline(TxtStdResid, col = "red")
+```
+### (f). Comment on the validity of the regression assumptions.
+
+### Based off of the scatterplot, the data seems to have a moderate to strong linear relationship, with a correlation coefficient of approximately 0.822. Based off of the plot of Standardized Residuals vs. Fitted Values, the points seem to be randomly scattered around the horizontal line y = 0, suggesting independence. Based on the QQ plot, the points follow the middle reference.
+
+### (g). The student is interested in seeing if the number of pages is a significant linear predictor of the textbook price. 
+
+### Write down the null and alternative hypotheses to answer this question
+
+### You will find the numerical value of the test statistic in the R output. Show how this value is calculated from the values of $\hat{\beta_1}$ and $\hat{SE}(\hat{\beta_1})$
+
+### $H_0: \mu = 0$
+
+### $H_1: \mu \neq 0$
+
+### What is the p-value for this test?
+
+### What is your conclusion at 5% significance level?
+
+### (h). Find a 95% confidence interval for the expected price change for every additional one page a book has. Show your mathematical work
+
+### Repeat the question (h) using R
+
+```{r}
+model <- lm(formula = Price ~ Pages, data = textbooks)
+conf_intervals <- confint(model, level = 0.95)
+print(conf_intervals)
+```
+
+
+### (j). Find a 95% confidence interval for the expected price change for every additional 100 pages a book has. Show your mathematical work
+
+
+### Question 4: Suburban towns often spend a large fraction of their municipal budgets on public safety (police, fire, and ambulance) services. A taxpayers’ group felt that very small towns were likely to spend large amounts per person because they have such small financial bases. The group obtained data on the per capita expenditure for public safety of 29 suburban towns in a metropolitan area, as well as the population of each town in units of 10,000 people. The data are given in expenditure.csv.
+
+### (a). Identify the explanatory and response variable in the problem.
+
+### The explanatory variable is the population and the response variable is the expenditure.
+
+### (b). If the taxpayers' group is correct, what sign should the slope of the regression model have?
+
+### Negative
+
+### (c). Obtain a scatterplot for the problem, and comment on your observations
+
+### (d). Fit a regression line for the problem. Does the slope in the output confirm the opinion of the group? Explain.
+
+```{r}
+read.csv(file = 'expenditure.csv')
+expenditure <- read.csv(file = 'expenditure.csv')
+ggplot(data = expenditure, aes(x = TownPop, y = Expend)) + geom_point() + geom_smooth(method = 'lm')
+lm(formula = Expend ~ TownPop, data = expenditure)
+```
+### There seems to be a weak correlation between the two variables. The slope of the regression line does not confirm the opinion of the group, as it is positive. The outliers present in the data may be a contributor as to why.
+
+### (e). There seems to be an unusual observation (town) in upper right corner of the scatterplot. Plot the Cook's distance for this data. Does this observation appear to be an influential point? Explain.
+
+```{r}
+model <- lm(formula = Expend ~ TownPop, data = expenditure)
+cooksd <- cooks.distance(model)
+plot(cooksd)
+```
+### Yes, it is an influential point because it has a high Cook's Distance of approximately 7.
+
+### (f). Obtain the least squares regression line after removing the unusual observation. Write down the equation of the fitted line.
+
+```{r}
+new_data <- expenditure[-29, ]
+ggplot(data = new_data, aes(x = TownPop, y = Expend)) + geom_point() + geom_smooth(method = 'lm')
+```
+### (g). Test if there is supporting evidence towards taxpayers' group belief (use the data without the unusual point)
+
+```{r}
+correlation <- cor(new_data$TownPop, new_data$Expend)
+print(correlation)
+```
+### Yes. There is a moderate negative correlation between Town Population and Expenditure.
+
+### Question 5: Do a quick Google search on “extrapolation in regression”. Write what is extrapolation in your words and explain the consequences
+
+### Extrapolation in regression is trying to estimate the outcome for values of the independent variable that were not included in the data set that was used to form the regression model. As a result, it might have decreased accuracy and increased uncertainty.
