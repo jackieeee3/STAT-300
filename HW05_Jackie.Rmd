@@ -1,0 +1,197 @@
+---
+title: "R Notebook"
+author: "Jackie Yang"
+output: html_notebook
+---
+### Question 1: A company manager is interested in analyzing the relationship between years of working experience and the salary of their employees. He has collected the data from a random sample of employees of their years of experience and the salary. Below provided is partial regression output from R. Use the provided information to answer below questions
+
+### (a). Write the equation of the least squares regression line of salary on years of experience
+
+### $\hat{y} = 9450x + 25792.2$ where $\hat{y}$ = salary and x = years of experience
+
+### (b). Interpret the slope and the intercept in the context of the problem
+
+### The slope is the expected increase in salary for year year of experience. The intercept is the expected salary for an employee with 0 years of experience.
+
+### (c). Calculate the coefficient of determination and interpret this number for this problem?
+
+### As $R^2 = 1 - \frac{SSResid}{SSTotal} \rightarrow R^2 = 1 - \frac{938130000}{20857000000} \rightarrow R^2 = 1 - 0.044979144 \rightarrow R^2 \approx 0.955$. The number is close to 1, meaning that a large proportion of the variability is explained by the regression model
+
+### (d). What is the sample correlation between salary and the years of working experience?
+
+### As the direction of the regression model is positive, the sample correlation $r = \sqrt{R^2} \rightarrow r = \sqrt{0.955} \rightarrow r \approx 0.977$. This indicates that there is a strong relationship between years of experience and salary.
+
+### (e). The Manager is interested in testing if the salary significantly increases with years of experience
+
+### (i) Set up the appropriate $H_0$ and $H_1$ to test this hypothesis
+
+### $$H_0: \beta_1 \leq 0 \\ H_1: \beta_1 > 0$$
+
+### (ii) Calculate the test statistic using the information provided to you in the above partial output
+
+### We can calculate the test statistic for YearsExperience by $t = \frac{Estimate}{Standard Error} \rightarrow t = \frac{9450}{378.8} \rightarrow t \approx 24.95$.
+
+### (iii) Calculate the p-value for the test. When you write the p-value, first write the probability statement corresponding to the p-value and then find the numerical value of the p-value for the test.
+
+### The probability statement corresponding to the p-value is that there is no significant increase in salary with years of experience. That is, there is a decrease or no increase in salary dur to years of experience. The test statistic was calculated and the degrees of freedom are given: 28. The p-value does not have to be multiplied by 2 since this is a one-tailed test.
+
+```{r}
+t_statistic <- 24.95
+df <- 28
+p_value <- pt(-abs(t_statistic), df)
+print(p_value)
+```
+### (iv) Write the final conclusion in the context of this problem (use 5% significance level)
+
+### We reject the null hypothesis, claiming that the salary significantly increase with years of experience.
+
+### Question 2: In Homework #3, we tried to understand the relationship between the diameter (in inches) and the volume (in cubix feet) of shortleaf pine trees using a random sample of 70 trees. Below provided is a scatterplot, residal plot of the fitted model of volume on diameter and the corresponding QQ plot. As you can see, there is clearly a problem with linearity and perhaps even constant variance assumption. Now, you will try to improve the model fit and them use it to make inferences.
+
+### (a). Make a scatterplot of volume on the log(diameter). Does it look like it has improved the linearity?
+
+```{r}
+read.csv(file = "shortleaf.csv")
+shortleaf <- read.csv(file = "shortleaf.csv")
+shortleaf$Diam <- log(shortleaf$Diam)
+ggplot(data = shortleaf, aes(x = Diam, y = Vol)) + geom_point() + geom_smooth() + labs(title = "Shortleaf Tree Diameter vs. Volume", x = "Diameter (inches)", y = "Volume (cubic feet)")
+```
+### It does not look like the log transformation on the variable Diameter improved the linearity
+
+### (b). Use log transformation on the response variable as well. Obtain a scatterplot between the two transformed variables. Comment on your observations.
+
+```{r}
+read.csv(file = "shortleaf.csv")
+shortleaf <- read.csv(file = "shortleaf.csv")
+shortleaf$Diam <- log(shortleaf$Diam)
+shortleaf$Vol = log(shortleaf$Vol)
+ggplot(data = shortleaf, aes(x = Diam, y = Vol)) + geom_point() + geom_smooth(method = 'lm') + labs(title = "Shortleaf Tree Diameter vs. Volume", x = "Diameter (inches)", y = "Volume (cubic feet)")
+```
+### By taking the log of both variables (Diameter and Volume), the scattersplot displays a strong linear relationship between the two variables
+
+### (c). Refit the regression model using the transformed data (i.e.: both transformed) and mark the estimated line on the scatterplot. 
+
+### Done in previous part.
+
+### (d) Check the validity of the assumptions. Use appropriate graphs and comment on each observation
+
+```{r}
+read.csv(file = "shortleaf.csv")
+shortleaf <- read.csv(file = "shortleaf.csv")
+shortleaf$Diam <- log(shortleaf$Diam)
+shortleaf$Vol = log(shortleaf$Vol)
+model <- lm(formula = Vol ~ Diam, data = shortleaf)
+res <- resid(model)
+qqnorm(res)
+qqline(res, col = "red")
+plot(fitted(model), res, xlab = "Fitted Values", ylab = "Standardized Residuals")
+```
+### Linearity: From the scatterplot of both transformed variables, there seems to be a strong positive linear relationship between Diameter and Volume.
+
+### Independence: Since this is a random sample of trees, we can assume that errors are independent
+
+### Normality: According to the QQ plot, the points seem to follow the reference line, suggesting normal residuals
+
+### Equal Variance: From the residual plot, the points are roughly scattered around the zero horizontal line within a constant band without any specific shape, suggesting that the relationship is linear
+
+### (e). Test if there is a strong linear relationship between the log(Volume) and the log(Diameter)
+
+### (i) Set up the null and alternative hypotheses for this
+
+### $$H_0: \rho = 0 \\ H_1: \rho \neq 0$$
+
+### (ii) From your R output, extract the test statistic for the above test.
+
+```{r}
+  summary(model)
+```
+### t-value = 50.09
+
+### (iii) What is the p-value for the test?
+
+### $2 \times 10^{-16}$
+
+### (iv) Write the final conclusion in the context of the problem
+
+### The p-value is close to 0, meaning we have strong evidence against the null hypothesis so we reject the null hypothesis. Based on the data, there is a strong correlation between the two variables Diameter and Volume.
+
+### (f) Suppose there is a shortleaf pine tree at your home which has a diameter of about 15 inches. Obtain an interval estimation for the volume of the tree.
+
+```{r}
+model <- lm(formula = Vol ~ Diam, data = shortleaf)
+new_diam <- data.frame(Diam = 15)
+predict(model, newdata = new_diam, interval = "predict")
+```
+### Question 3: The data storm.csv file has windspeed (in knots) and the central pressure (in millibars) for a random sample of hurricanes from the past.
+
+### Suppose the central pressure is something that can be obtained relatively easily. So the goal is to develop a model to predict the windspeed from the central pressure. Make a scatterplot to display the relationship. Comment on your observations.
+
+```{r}
+read.csv(file = "storm.csv")
+windspeed <- read.csv(file = "storm.csv")
+ggplot(data = windspeed, aes(x = pressure, y = wind)) + geom_point() + labs(title = "Wind Speed Based on Pressure", x = "Pressure", y = "Wind Speed")
+```
+### There seems to be a moderate negative correlation between the two variables
+
+### (b) Obtain the fitted regression model and overlay it on the scatterplot.
+
+```{r}
+windspeed <- read.csv(file = "storm.csv")
+ggplot(data = windspeed, aes(x = pressure, y = wind)) + geom_point() + geom_smooth(method = 'lm') + labs(title = "Wind Speed Based on Pressure", x = "Pressure", y = "Wind Speed")
+```
+### (c). Write the equation of the fitted model
+
+```{r}
+model <- lm(formula = wind ~ pressure, data = windspeed)
+summary(model)
+```
+### $\hat{y} = 1043.1047 - 0.7852x$
+
+### (d) What percentage of variation in the wind speed is explained by the central pressure of a hurricane?
+
+### $R^2 = 0.5457$ meaning that approximately 55% of the variation in wind speed is explained by the central pressure of a hurricane.
+
+### (e) Test if there is a significant negative correlation $(\rho)$ between the wind speed and the central pressure
+
+### (i) Set up the correct null and alternative hypothesis
+
+### $H_0: \rho \geq 0 \\ H_1: \rho < 0$
+
+### (ii) Calculate the test statistic by hand (type up the work). When calculating the test statistic, you may use R to find the sample correlation, and then show the calculation.
+
+```{r}
+r <- cor(windspeed$wind, windspeed$pressure)
+print(r)
+```
+### The t test is for correlation so $t = \frac{r \sqrt{n - 2}}{\sqrt{1 - r^2}} \rightarrow t = \frac{-0.7387273 \sqrt{42 - 2}}{\sqrt{1 - (-0.7387273^2)}} \rightarrow t = \frac{-0.7387273 \sqrt{40}}{\sqrt{1-0.545718024}} \rightarrow t = \frac{-4.672121675}{0.674004433} \\ \rightarrow t \approx -6.932$
+
+### (iii) What is the distribution of the test statistic under the null hypothesis
+
+### One-tailed
+
+### (iv) What is the p-value for the est?
+
+### p-value = $2.33 \times 10^{-8}$
+
+### (v) Write the final conclusion in the context of the problem
+
+### The p-value is close to 0 so we reject the null hypothesis. Based on the current data, we accept the alternate hypothesis, suggesting there is a significantnegative correlation between the wind speed and the central pressure
+
+### (vi) Redo the test using R. Include the average wind speed for all the storms with central pressure 920 mb
+
+### (f) Obtain a 95% confidence interval for the average windspeed for all storms with central pressure 920 mb
+
+```{r}
+model <- lm(formula = wind ~ pressure, data = windspeed)
+new_data <- data.frame(pressure = 920)
+predict(model, newdata = new_data, interval = "confidence")
+```
+### (g) Obtain a 95% prediction inverval for the wind speed for a storm with central pressure 920 mb
+
+```{r}
+model <- lm(formula = wind ~ pressure, data = windspeed)
+new_data <- data.frame(pressure = 920)
+predict(model, newdata = new_data, interval = "prediction")
+```
+### (h) Hurricane Katrina had a central pressure of about 920 mb with wind speed 110 knots. Related to the intervals you calcualted in parts (f) and (g), if you were to obtain a range for the wind speed for hurrican Katrina, which interval would you have used? Explain your answer.
+
+### I would have used the prediction interval because it estimates the range in which an individual value of the dependent variable is likely to fall for a given value of x. Furthermore, the range of the prediction interval is wider, ranging from 102.1115 to 166.3249. The confidence interval calculated only ranges from 124.9994 to 143.47 which does not capture the actual wind speed for Hurricane Katrina with a central pressure of about 920 mb.
