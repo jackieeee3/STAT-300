@@ -1,0 +1,235 @@
+---
+title: "Homework 1" 
+author: "Jackie Yang" 
+output: html_notebook 
+---
+
+### Question 1: In class we discussed about both numerical and graphical summaries to describe the data. You will be using the dataset mtcars available in R to make some numerical and graphical summaries. Original data was taken from 1974 Motor Trend US magazine. This dataset includes fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973 74 models). 
+
+### NOTE: Don't just copy paste the codes. Take a look at the help files for each of these functions and see if they make sense to you.
+
+### (a). Use below code lines to access the help file for mtcars dataset and to print the first few observations of the dataset. Your code and the output need to appear in your answer. 
+
+```{r} 
+help(mtcars)
+head(mtcars) 
+``` 
+
+### (b). The variable am tells you the type of transformation: auto or manual. What is the type of the variable? 
+
+```{r} 
+class(mtcars$am)
+```
+### The value is numeric but the variable is categorical
+
+### (c). Use an appropriate graphical display to summarize the variable am. Comment on what you see. 
+
+```{r}
+
+```
+
+
+### (d). Suppose I want to compare mileage of the vehicle for Auto and Manual Transmission vehicles. You can make the comparison by making a side-by-side boxplot as below. Use the below provided code to create the plot and comment on what you can observe from the plots (make sure to include the plot) 
+
+```{r} 
+boxplot(mpg~am,data=mtcars,xlab="Transmission",ylab="mpg",col=c("deepskyblue4","deepskyblue"))
+legend("topright",legend=c("0-Auto","1-Manual"))
+``` 
+
+### (e). In the R tutorial I gave you, one of the activities was about accessing a certain column dataframe. Use the R functions: mean() and sd() to find the mean and the standard deviation of the variable mpg
+
+```{r} 
+mean(mtcars$mpg)
+sd(mtcars$mpg)
+```
+
+### Question 2: Download the kc_house_data.csv file form Canvas and save it in your working directory. This dataset includes information on homes sold between May 2014 and May 2015 in King County in Washington State. 
+
+### (a). Read the dataset into R and print the first couple of observations. Use read.csv() function to read the data
+
+```{r}
+read.csv(file = "kc_house_data.csv" , header = TRUE, sep = ",")
+house <- read.csv(file = "kc_house_data.csv" , header = TRUE, sep = ",")
+```
+
+### (b). Variable "price" is the selling price of the house. Use a suitable graph to display the house prices in King County. Comment on your observation such as shape, any outliers, etc.
+
+```{r}
+hist(house$price, main = "Distribution of House Prices", xlab = "Price", axes = F)
+axis(1, at = axTicks(1), labels = format(axTicks(1), scientific = FALSE))
+axis(2, at = axTicks(2), labels = format(axTicks(2), scientific = FALSE))
+```
+```{r}
+p <- ggplot(data = house, aes(x = price)) + stat_bin(bins = 147) + labs(x = "House Price")
+library(scales)
+p + scale_x_continuous(labels = label_comma())
+```
+
+
+### (c). Suppose a buyer would like to see variations/any difference in house price based on the number of bedrooms. Use a suitable graphical technique to display this information. Comment on your observation
+
+### Question 3: Using R functions pnorm() and qnorm() you can find the cumulative probabilities and normal quantiles for any normal distribution. For instance: pnorm(1.96,mean=0,sd=1) qnorm(0.025,mean=0,sd=1)
+
+```{r}
+pnorm(1.96, mean = 0, sd = 1)
+qnorm(0.025, mean = 0, sd = 1)
+```
+
+### Please note that in the abbreviation X ~ N(theta1, theta2). Theta1 represents the mean and theta2 represents the variance (carefully look at the R argument before you pass the numbers) of the distribution
+
+### (a). Use R to find each of the below provavilities
+
+### (i). If X~N(5,2), then find P(X<=4)
+
+```{r}
+pnorm(4, mean = 5, sd = 2)
+```
+
+### (ii). If X ~ N(5, 2), then find P(X > 6)
+
+```{r}
+1 - pnorm(6, mean = 5, sd = 2)
+```
+
+### (iii). If X ~ N(10, 1), then find P(X < 9)
+
+```{r}
+pnorm(9, mean = 10, sd = 1)
+```
+
+### (b). Use R to find each of the below normal quantiles
+
+### (i). If X ~ N(5, 2), then find the value a such that P(X < a) = 0.025
+
+```{r}
+qnorm(0.025, mean = 5, sd = 2)
+```
+
+### (ii). If X ~ N(5, 2), then find the value a such that P(X > a) = 0.025
+
+```{r}
+qnorm(0.975, mean = 5, sd = 2)
+```
+
+### (iii). If X ~ N(10, 1), then find the value a such that P(X > a) = 0.55
+
+```{r}
+qnorm(0.45, mean = 10, sd = 1)
+```
+
+### Question 4: Similar to the normal distribution, you can find cumulative probabilities and quartilesusing pt() and qt()  functions in R. Use R to answer the questions below
+
+### (a). If T ~ t(2) then fund the P(T <= 5)
+
+```{r}
+pt(5, df = 2)
+```
+
+### (b). If T ~ t(5) then find the P(T > 2)
+
+```{r}
+1 - pt(2, df = 5)
+```
+
+### (c). If T ~ t(10) then find the value a such that P(T > a) = 0.75
+
+```{r}
+qt(0.25, df = 10)
+```
+
+### (d). If T ~ t(1) then find the value a such that P(T < a) = 0.75
+
+```{r}
+qt(0.75, df = 1)
+```
+
+### (e). If T ~ t(1) then find the value a such that P(T > a) = 0.75
+
+```{r}
+qt(0.25, df = 1)
+```
+
+### Question 5: A sample of 36 obese adults was put on a special low carbohydrate diet for a year. The average weight loss was 11 lb and the standard deviation was 19 lb (note that positive weight loss implies reduced weight over time).
+
+### (a). Calculate the 99% confidence interval for the true mean weight reduction. Do the calculations by hand (that is type up your work). See homeworktemplate in Canvas for instructions on typing up the work
+
+$$\bar{x}\pm t_{\frac{\alpha}{2},(n-1)}\frac{s}{\sqrt{n}}$$
+```{r}
+qt(0.995, df = 35)
+
+```
+
+$$11\pm2.724\times\frac{19}{\sqrt{36}}=(2.374, 19.626)$$
+
+### (b). Based on the interval you calculate above, do you have sufficient evidence to believe that this diet program in fact helps reduce weight?
+
+### Since a positive value represents reduced weight over time, we are confident that 99% of all intervals sampled will include participants who lost 2.374 lb to 19.626 lb
+
+### Question 6: In a standard dissolution test for tablets for a particular drug product, the manufacturer must obtain the dissolution rate for a batch of tablets prior to release of the batch. Suppose that the dissolution test consists of assays for 24 randomly selected individual 25 mg tablets. For each test, the tablet is suspended in an acid bath and then assayed after 30 minutes. The results of the 24 assays are given in drug.csv file.
+
+### (a). Check if the data appear to be a random sample from a normal distribution. Attach plots and comment on them (Use read.csv() function to read the data into R)
+
+```{r}
+read.csv(file = "drug.csv" , header = TRUE, sep = ",")
+drug <- read.csv(file = "drug.csv" , header = TRUE, sep = ",")
+hist(drug$Dissolution, main = "Distribution of Dissolution Values", xlab = "Dissolution Rate", axes = F)
+axis(1, at = axTicks(1), labels = format(axTicks(1), scientific = FALSE))
+axis(2, at = axTicks(2), labels = format(axTicks(2), scientific = FALSE))
+mean(drug$Dissolution)
+```
+### (b). Provide an interval estimate for the mean dissolution rate for the batch of tablets. Use 99% confidence level (Use R to calculate the CI). Hint: look for t.test() function
+
+```{r}
+t.test(drug$Dissolution, mu = 19.82917, conf.level = 0.99)
+
+```
+
+### (c). Based on the above interval, is there significant evidence that the batch of pills has a mean dissolution rate less than 25 mg
+
+### Yes
+
+### Question 7: A consumer-testing agency wants to evaluate the claim made by a manufacturer of discount tires. The manufacturer claims that its tires can be driven at least 35,000 miles before wearing out. To determine the average number of miles that can be obtained from the manufacturer's tires, the agency randomly selects 60 tires from the manufacturer's warehouse and places the tires on 15 cars driven by test drivers on a 2-mile oval track. The number of miles driven (in thousands of miles) until the tires are determined to be worn out is given in the tires.csv file. Agency would like to know if the manufaturere's claim is false
+
+### (a). Carry out an appropriate hypothesis test (use 1% significance level). Show the 6-steps as we did in the class and use the P-value approach (see homeworktemplate in Canvas for instructions on typing up the work).
+
+```{r}
+read.csv(file = 'tires.csv', header = TRUE, sep = ",")
+tires = read.csv(file = 'tires.csv', header = TRUE, sep = ",")
+mean(tires$MilesDriven)
+sd(tires$MilesDriven)
+```
+
+### Step 1: Setting up two competing hypotheses
+
+$$H_0: \mu \geq 35$$
+$$H_0: \mu \neq 35$$
+
+### Step 2: Set some level of significance and check conditions
+
+### Significance Level:
+$$\alpha = 1\%$$
+
+### Step 3: Calculate a test statistic
+$$t = \frac{\bar{x} - \mu_0}{\frac{s}{\sqrt{n}}}$$
+$$t = \frac{31.46667 - 35}{\frac{5.040786}{\sqrt{36}}} = -4.206$$
+
+### Step 4: Find the rejection region or calculate the p-value
+
+```{r}
+pt(4.206, df = 14)
+```
+
+
+### Step 5: Make a decision about the null hypothesis
+
+### Based on the p-value, we fail to reject the null hypothesis
+
+### Step 6: Write the final conclusion in the context of the problem
+
+### Fail to reject the null hypothesis since it does not fall in the rejection region
+
+### (b). Redo the test using R. See if your hand-calculations are consistant with what you obtained form R. Use read.csv() function to read the file into R and t.test() function to carry out the test
+
+```{r}
+t.test(tires$MilesDriven, mu = 31.46667, conf.level = 0.99)
+```
