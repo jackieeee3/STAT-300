@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+author: "Jackie Yang"
+output: html_notebook
+---
+
+### Question 1: The RailsTrails.csv data include information on a random sample of 104 homes that were sole in 2007 in the city of Northampton, MA. The goal is to see if the home's proximity to a biking trail would relate to the selling price. For this you will be using variables Adj2007 (given in 1000's of dollars) which is the sold price in 2007 adjusted for inflation and Distance which is the distance in miles to the nearest entry point of a trail.
+
+### (a). Create an appropriate graph to see the relationship between the sold price and the distance to a trail
+
+```{r}
+read.csv(file = "RailsTrails.csv")
+homes <- read.csv(file = "RailsTrails.csv")
+ggplot(data = homes, aes(x = distance, y = adj2007)) +
+  geom_point()
+```
+### (b). Comment on your observation
+
+### The two variables seem to have a weak to moderate negative correlation.
+
+### (c). Use R to obtain the least squares regression model
+
+```{r}
+lm(formula = adj2007 ~ distance, data = homes)
+```
+
+### (d). Write down the least squares regression model
+
+### y = 388.20 - 54.43x
+
+### (e). Interpret the slope and the intercept in the context of this problem
+
+### The slope is the expected decrease  in selling price (in thousands) for every mile increase to the nearest entry point of a trail. The intercept is the expected selling price for a home where the nearest entry point of a trail is 0 miles. This is possible if the house is directly next to the entry point of a trail.
+
+### (f). What is the regression standard error?
+
+```{r}
+model <- lm(formula = adj2007 ~ distance, data = homes)
+summary(model)
+```
+### From the summary, the standard error of the regression model is 14.052
+
+### (g). Check the validity of the regression assumptions by making appropriate graphs and commenting on each of the assumptions. When you comment on the validity of the assumptions, you have to clearly state why or why not a certain assumption is violated
+
+```{r}
+res <- resid(model)
+qqnorm(res)
+qqline(res, col = "red")
+plot(fitted(model), res)
+```
+### Based on the QQ-plot, the right tail curves upward away from the y = x line, suggesting right skewness in the data
+
+### Question 2: For this problem you will be again using the RailsTrails.csv data. Now you are going to see if price (Adj2007) is associated with the size of the house (SquareFeet - given in 1000's)
+
+### (a). Create an appropriate graph to see the relationship between sold price and the size of the house
+
+```{r}
+ggplot(data = homes, aes(x = squarefeet, y = adj2007)) + geom_point()
+```
+### (b). Comment on your observations. Does this align with what you would have expected to be?
+
+### Yes. Judging from the scatterplot, tere is a moderate to strong positive correlation between selling price and the size of the house. It is what I expected because it is logical to assume that the bigger something is, the more costly it becomes.
+
+### (c). Use R to obtain the least squares regression model
+
+```{r}
+lm(formula = adj2007 ~ squarefeet, data = homes)
+```
+### (d). Write down the least squares regression model
+
+### y = 72.97 + 162.53x
+
+### (e). Interpret the slope in the context of the problem
+
+### The slope is the expected increase in selling price (in thousands) for every square foot increase in the size of the house.
+
+### (f). Check the validity of the regression assumptions by making appropriate graphs and commenting on each of the assumptions
+
+```{r}
+model <- lm(formula = adj2007 ~ squarefeet, data = homes)
+res <- resid(model)
+qqnorm(res)
+qqline(res, col = "red")
+plot(fitted(model), res)
+```
+### Judging from the QQ plot, it is improved from the last one as more points align with the middle reference line but may still have a slight right skew. The residual plot seems to have a megaphone shape, indicating increasing variance
+
+### Question 3: A capacitor was charged with a 9-volt battery and then a voltmeter recorded the voltage as the capacitor was discharged. Measurements were taken every 0.02 seconds. The data is in the Volt.csv file
+
+### (a). Make a scatterplot with voltage on the y-axis and time on the x-axis. Comment on what you observe
+
+```{r}
+read.csv(file = "Volts.csv")
+volts <- read.csv(file = "Volts.csv")
+ggplot(data = volts, aes(x = Time, y = Voltage)) + geom_point()
+```
+### There is a clear trend in the scatterplot which in this case is a decreasing curve.
+
+### (b). Regardless, fit a linear model and obtain the fitted regression model
+
+```{r}
+lm(formula = ~ Time, data = volts)
+```
+
+```{r}
+ggplot(data = volts, aes(x = Time, y = Voltage)) + geom_point() + geom_smooth(method = 'lm')
+```
+### (c). Write the equation of the least squares regression model
+
+### y = 7.575 - 7.555x
+
+### (d). Create a plot of standardized residuals vs. fitted values plot. What does the plot say about fitting a linear model to predict voltage from time?
+
+```{r}
+model <- lm(formula = Voltage ~ Time, data = volts)
+std_resid <- rstandard(model)
+fitted_vals <- fitted(model)
+plot(fitted_vals, std_resid, xlab = "Fitted Values", ylab = "Standardized Residuals", main = "Standardized Residuals vs. Fitted Values")
+abline(h = 0, lty = 2)
+lines(lowess(fitted_vals, std_resid), col = "red")
+```
+### The pattern is non-linear, suggesting that the relationship is also non-linear. 
+
+### (e). Transform voltage with log transformation and plot log(voltage) vs. time. Comment on what you see.
+
+```{r}
+ggplot(data = volts, aes(x = Time, y = log(Voltage))) + geom_point() + geom_smooth(method = 'lm')
+```
+### With the log transformation, there is not a strong negative linear relationship between the two variables.
+
+### (f). Regress log(voltage) on time and write the equation
+
+```{r}
+lm(formula = log(Voltage) ~ Time, data = volts)
+```
+### y = 2.190 - 2.059x
+
+### (g). Now make a plot of standardized residuals vs. fitted values plot for the model you obtain in part (f). Comment on your observations
+
+```{r}
+model <- lm(formula = log(Voltage) ~ Time, data = volts)
+std_resid <- rstandard(model)
+fitted_vals <- fitted(model)
+plot(fitted_vals, std_resid, xlab = "Fitted Values", ylab = "Standardized Residuals", main = "Standardized Residuals vs. Fitted Values")
+abline(h = 0, lty = 2)
+lines(lowess(fitted_vals, std_resid), col = "red")
+```
+### There is a curved relationship
+
+### (h). Using the fitted model to the transformed data, predict the voltage when the elpase time is 0.6 sec
+
+### The equation for the transformed data is y = 2.190 - 2.059x. When x = 0.6, y = 0.9546. The observed value for x = 0.6 is y = 1.28, making it a difference of 0.3254.
+
+### (i). How close is your prediction to the observed response
+
+### Given that the values are smaller in scale, I would say that the prediction is not very close to the observed response as the predicted value is missing 25% of the observed value
+
+### Question 4: Many different interest groups such as the lumber industry, ecologists, and foresters benefit from being able to predict the volume of a tree just by knowing its diamete. One classic data set (shortleaf.txt) reported by C. Bruce and F.X. Schumacher in 1935 concerned the diameter (in inches) and volume (in cubic feet) of 70 shortleaf pines. A researcher is interested in learning about the relationship between the diameter and volume of shortleaf pines
+
+### (a). Identify the response variable and explanatory variable for the problem
+
+### The response variable is the volume and the explanatory variable is the diameter
+
+### (b). Draw a scatterplot to show how volume of a tree and its diameter are associated. Comment on your observations
+
+```{r}
+read.csv(file = 'shortleaf.csv')
+trees <- read.csv(file = 'shortleaf.csv')
+ggplot(data = trees, aes(x = Diam, y = Vol)) + geom_point()
+```
+### There seems to be a moderate to strong positive correlation between diameter and volume
+
+### (c). Fit a regression line for the problem, write down the estimated equation (define any terms you might have used), and overlay the estimated line on the scatterplot)
+
+```{r}
+lm(formula = Vol ~ Diam, data = trees)
+ggplot(data = trees, aes(x = Diam, y = Vol)) + geom_point() + geom_smooth(method = 'lm')
+model <- lm(formula = Vol ~ Diam, data = trees)
+```
+### (d). Obtain the diagnostics for the fitted model in part (c). CLearly state your observations. Provide all the outputs you need.
+
+```{r}
+summary(model)
+res <- resid(model)
+qqnorm(res)
+qqline(res, col = "red")
+plot(fitted(model), res)
+```
+### In the QQ plot, data points align with the middle reference line and judging from the residual plot, the data has both nonlinear and nonconstant variance
+
+### (e). Identify (i) the point with the highest residual (studentized residual), (ii) the point with highest leverage, and (iii) the point with highest Cook's distance. Suppose a friend of the researcher suggested that there is an influential point in the data, and ahould be investigated. Do you agree with this comment? Explain your reasoning.
+
+```{r}
+max_resid <- trees[abs(res) == max(abs(res)),]
+print(max_resid)
+max_hats <- max(as.data.frame(hatvalues(model)))
+plot(hatvalues(model))
+cooksD <- cooks.distance(model)
+plot(cooksD)
+```
+### Yes. There is a point in the data with a Cook's distance of around 2, making it highly influential
