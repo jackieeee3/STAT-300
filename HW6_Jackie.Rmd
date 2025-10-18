@@ -1,0 +1,153 @@
+---
+title: "Homework #6 Jackie Yang"
+output: html_notebook
+---
+
+### Question 1: Certain statistics courses include a midterm exam (out of 100) and a project (out of 30). Below, the least squares model was obtained using the data from 24 students in the class. $$\hat{Final} = 11.0 + 0.53Midterm + 1.20Project$$
+
+### (a). What would this tell you about a student who got a perfect score on the midterm and the project?
+
+### The student received a perfect score on the midterm and the project so the value for Midterm = 100 and the value for Project = 30. Plugging the values into the least squares model gives $$\hat{Final} = 11.0 + 0.53(100) + 1.20(30) = 11 + 53 + 36 = 100$$ The expected score for the student's final exam is 100.
+
+### (b). Leo got 87 on the midterm and 21 on the project, and 80 on the final exam. Calculate the residual and write a sentence explaining what this means in Leo's case.
+
+### For Leo, $$\hat{Final} = 11.0 + 0.53(87) + 1.20(21) = 11.0 + 46.11 + 25.2 = 82.31$$ But the observed value of the final exam for Leo is 80. Thus, $$Residual = Observed Value - Expected Value \Rightarrow Residual = 80 - 82.31 = -2.31$$ The residual is negative, meaning Leo's performance was worse than the model predicted.
+
+### (c). Does the fitted model above suggest that the project score has a stronger relationship with final exam score than the midterm score. Explain your answer. 
+
+### Yes. The coefficient for the project equals 1.2 which is larger than the coefficient for the midterm which equals 0.53. A larger coefficient suggests that the variable has a stronger relationship with the final exam score.
+
+### (d). Interpret $\hat{\beta_2}$ in the context of the problem.
+
+### $\hat{\beta_2}$ is the expected increase in final exam score for a point increase in project score.
+
+### Question 2: State whether the statements below are true of false with an explanation
+
+### (a). For MLR, the $Adj - R^2$ will always be smaller than $R^2$ value. HINT: Two formulas can be written as below. $$R^2 = 1 - \frac{SSE}{SSTotal}$$ $$Adj - R^2 = 1 - \frac{(n - 1)}{(n - k - 1)} \frac{SSE}{SSTotal}$$
+
+### True. When k = 0, $$Adj - R^2 = 1 - \frac{(n - 1)}{(n - 1)} \frac{SSE}{SSTotal} = 1 - \frac{SSE}{SSTotal} = R^2$$ When k > 0, $$(n - 1) > (n - k - 1) \Rightarrow \frac{(n - 1)}{(n - k - 1)} > 1$$ $$\Rightarrow \frac{(n - 1)}{(n - k - 1)} \frac{SSE}{SSTotal} > \frac{SSE}{SSTotal} \Rightarrow 1 - \frac{(n - 1)}{(n - k - 1)}\frac{SSE}{SSTotal} < 1 - \frac{SSE}{SSTotal}$$ $$\Rightarrow Adj - R^2 < R^2$$
+
+### (b). If we fit a MLR model and then add a new predictor to the model, the $Adj - R^2$ will always increase.
+
+### False. The adjusted R-squared can decrease if the new predictor does not improve the model. $Adj - R^2$ penalizes for adding more variables into the model
+
+### Question 3: You will be using RailsTrails.csv data for this activity. The primary goal of the researcher was to learn the impact on the sale price.(Adj2007 in 1000's of dollars) by the distance to a bike trail. By adding the size of the house (SquareFeet in 1000's) to the model, we hope to address this research question while controlling/adjusting for the size of the house.
+
+### (a). Fit a SLR model of Adj2007 on Distance. What is the coefficient of determination for the model?
+
+```{r}
+read.csv(file = 'RailsTrails.csv')
+rails_trails <- read.csv(file = 'RailsTrails.csv')
+ggplot(data = rails_trails, aes(x = distance, y = adj2007)) + geom_point() + geom_smooth(method = 'lm') + labs(x = 'Distance to Bike Trail', y = 'Sale Price 2007')
+model <- lm(adj2007 ~ distance, data = rails_trails)
+summary(model)
+```
+### The coefficient of determination or $R^2 = 0.2374$
+
+### (b). Now, fit a model with both predictor variables: Distance and SquareFeet. By how much $R^2$ has increase?
+
+```{r}
+ggplot(data = rails_trails) + geom_point(aes(distance, adj2007, color = "red")) + geom_smooth(aes(distance, adj2007), method = 'lm', color ="black") + geom_point(aes(squarefeet, adj2007, color = "blue")) + geom_smooth(aes(squarefeet, adj2007),  method = 'lm', color = "black") + labs(x = "Predictor Variables", y = "Sale Price 2007", color = "Predictors\n") + scale_color_manual(labels = c("Square Feet", "Distance"), values = c("blue", "red"))
+
+mlr_model <- lm(adj2007 ~ distance + squarefeet, data = rails_trails)
+summary(mlr_model)
+```
+### The R^2 I got was 0.7655. It increased by 0.7655 - 0.2374 = 0.5281
+
+### (c). Check the validity of the assumptions for the fitted model in part (b).
+
+### Linearity: From the scatterplot with both predictor variables, both seem to have a linear relationship, specifically Distance seems to have a weak to moderate negative correlation to the sale price and square feet seems to have a moderate to strong positive correlation to the sale price.
+
+```{r}
+res <- resid(mlr_model)
+plot(fitted(mlr_model), res)
+```
+### Independence: The residual plot has a noticeable pattern which suggests that there is a violation of independence
+
+```{r}
+qqnorm(res)
+qqline(res, col = "red")
+```
+
+### Normality: Within the QQ plot, the points seem to follow the refernce line, suggesting normal residuals
+
+### Equal Variance: From the residual plot, the points seem to form a megaphone shape, suggesting nonconstant variance
+
+### (d). When Distance is in the model, is the contribution from SquareFeet significant?
+
+### (i). Set up appropriate null and alternative hypotheses
+
+### $$H_0: \beta_2 = 0$$ $\\$ $$H_1: \beta_2 \neq 0$$
+
+### (ii). Extract the value of the test statistic for the above test.
+
+```{r}
+summary(mlr_model)
+```
+### From the summary, for the variable SquareFeet, t = 15.080
+
+### (iii) What is the distribution of the test statistic under the null?
+
+### t(n - k - 1) = t(101)
+
+### (iv) What is the p-value for the test?
+
+### p-value = $2 \times 16^{-10}$
+
+### (v) Write the final conclusion for the above question (use 5% significance level)
+
+### As p-value = $2 \times 16^{-10} < 0.05$, we reject $H_0: \beta_2 = 0$. Thus, we accept that the contribution from SquareFeet is significant.
+
+### (e). Using the two predictor model, obtain a prediction for the price of a particular home that goes in the market that has 1500 square feet and 0.5 miles from a bike trail. Provide an interpretation for this interval
+
+```{r}
+predict(mlr_model, newdata = data.frame(squarefeet = 1.5, distance = 0.5), interval = "prediction")
+```
+### Given that a home has 1500 square feet and the fact that it is 0.5 miles from a bike trail, its sale price is expected to fall between $225,028.50 and $430,310.70
+
+### Question 4: There are two types of dementia: Dementia with Lewy Bodies, and Alzheimer's disease. Some people are afflicted with both of these. You will be using LewyBody2Groups dataset in Stat2Data package for this analysis
+
+### (a). Use the ?LewyBody2Groups in the console to see the help page for the dataset. Use it to provide the details of the variables in the dataset
+
+```{r}
+library(Stat2Data)
+?LewyBody2Groups
+```
+### There are 3 variables: $\\$ 1.Type where DLB = Dementia with Lewy Bodies or DLB/AD = DLB and Alzheimer's Disease $\\$ 2. APC which stands for Annualized Percentage Change form baseline volume of the brain $\\$ 3. MMSE which is the change in functional performance on the Mini Mental State Examination
+
+### (b). Make a scatterplot of MMSE on APC with Type as a grouping variable (use different colors/shapes for the two types). Comment on your observations.
+
+```{r}
+print(LewyBody2Groups)
+ggplot(data = LewyBody2Groups, aes(x = APC, y = MMSE, color = Type, shape = Type)) + geom_point(size = 3) + labs(title = "Scatterplot of MMSE vs APC", x = "APC", y = "MMSE") + theme_minimal() + scale_color_manual(values = c("blue", "red")) + geom_smooth(method = 'lm')
+```
+### (c). Fit a model that produces prallel regression lines for the two levels of Type. Write down the fitted regression model. Define any terms in the model equation.
+
+```{r}
+lm(MMSE ~ APC + Type, data = LewyBody2Groups)
+model <- lm(MMSE ~ APC + Type, data = LewyBody2Groups)
+summary(model)
+```
+### For patients with DLB, the model equation is $\hat y = 1.5015x - 0.9433$ and for patients with DLB and AD, the model equation is $\hat y = -1.3135x - 0.9433$
+
+### (d). What is the average estimated difference in MMSE for patients with both types of dementia compared to those with only Lewy Body dementia assuming they have similar percentage change from baseline volume of the brain?
+
+### The average estimated difference in MMSE for patients with both types of dementia compared to those with only Lewy Body dementia is -1.3135
+
+### (e). Is the average difference you stated in part (d) statistically significant (use 5% significance level)?
+
+### (i) Set up appropriate null and alternate hypotheses
+
+### $$H_0: \beta_2 = 0$$ $\\$ $$H_1: \beta_1 \neq 0$$
+
+### (ii) Extract the value of the test statistic for the above test
+
+### t = -1.457
+
+### (iii) What is the p-value for the test?
+
+### p-value = 0.15385
+
+### (iv) Answer the research question based on the p-value in part (iii)
+
+### The p-value = 0.15385 > 0.05 so we fail to reject the null hypothesis, meaning that the average difference is not statistically significant.
