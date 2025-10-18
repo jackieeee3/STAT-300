@@ -1,0 +1,314 @@
+---
+title: "R Notebook"
+output: html_notebook
+author: 'Jackie Yang'
+---
+
+### Question 1: A researcher is interested in the effect of two different culture media and two different times on the growth of a certain bacteria. Making the runs in a random order, she has collected data on the growth of the bacteria under each factor combination levels. Data can be found in virus.csv file.
+
+### (a). Recognize the experimental units, factors of interest and the response variable in this study.
+
+### The experimental units are the bacteria. Factors of interest are two different culture media and two different times. The response variable is the growth of the bacteria. 
+
+### (b). Use aggregate() function to find the means for factor level combination.
+
+```{r}
+bacteria_data <- read.csv("bacteria.csv")
+mean_growth <- aggregate(Growth ~ Culture + Time, data = bacteria_data, FUN = mean)
+names(mean_growth) <- c("Culture", "Time", "Mean Growth")
+print(mean_growth)
+```
+### (c). Visualize the information in an interaction plot. Comment on your observations.
+
+```{r}
+library(ggplot2)
+
+interaction.plot(x.factor = bacteria_data$Time,
+                 trace.factor = bacteria_data$Culture,
+                 response = bacteria_data$Growth,
+                 type = "b",
+                 pch = 19,
+                 col = c("blue", "red"),
+                 xlab = "Time",
+                 ylab = "Bacterial Growth",
+                 legend = FALSE,
+                 main = "Interaction Plot for Culture and Time")
+
+legend("topleft", 
+       legend = c("Culture 1", "Culture 2"),
+       col = c("blue", "red"),
+       pch = 19, 
+       lty = 1,
+       title = "Culture",
+       xpd = TRUE)
+```
+### The bacterial growth for Culture 1 seems to start lower at 12h than Culture 2 but ends up having a larger amount of bacterial growth by 18h. In other words, bacterial growth for Culture 1 is more rapid than Culture 2 as can be seem by the slopes of the two lines corresponding to the two cultures.
+
+### (d). Fit an appropriate model to investigate the relationship between the bacteria growth and factor variable(s) of interest.
+
+```{r}
+anova_model <- aov(Growth ~ Culture * Time, data = bacteria_data)
+summary(anova_model)
+```
+### (e). At 5% significance level, test if the effect of culture on the growth depends on the time. Set up appropriate null and alternative hypotheses and complete the test.
+
+### $H_0$: The effect of culture on bacterial growth does not depend on time
+
+### $H_1$: THe effect of culture on bacterial growth does depend on time
+
+### The p-value for Culture:Time is 0.000397 which is less than 0.05. We reject the null hypothesis and accept the alternative hypothesis, implying that the effect of culture on bacterial growth does depend on time.
+
+### (f). Check the validity of the model assumptions.
+
+### Linearity: Judging from the interaction plot, the relationship between time and bacterial growth seems to be linear.
+
+### Independence: The researcher made the runs in a random order, so we can assume independence.
+
+```{r}
+res <- resid(anova_model)
+plot(fitted(anova_model), res)
+```
+```{r}
+qqnorm(res)
+qqline(res, col = 'red')
+```
+### Normality: From the QQ plot, the points follow the reference line pretty closely, so we can assume normality.
+
+### Equal Variance: From the residual plot, the points seem to be evenly scattered around the zero horizontal line so we can assume equal variance.
+
+### (g). Researcher wants your gelp with answering below questions. Use R to produce any outputs you used to answer these questions. Using the generated outputs, provide statistical conclusions for the questions.
+
+### (i). For the bacteria cultivated on medium 1, is there a significant difference in average growth between leaving for 18 hours as opposed to 12 hours?
+
+### $H_0: \mu_{18} = \mu_{12}$
+
+### $H_1: \mu_{18} \neq \mu_{12}$
+
+### The subscripts pertain to the hour. From the t-test and using a 5% significance level, we get a p-value of $1.893 \times 10^-5 < 0.05$. Therefore, we reject the null hypothesis and accept the alternative hypothesis, indicating that there is a significant difference in average growth between leaving for 18 hours as opposed to 12 hours for medium 1.
+
+```{r}
+medium_1_data <- subset(bacteria_data, Culture == "C1")
+t_test_medium_1 <- t.test(Growth ~ Time, data = medium_1_data)
+print(t_test_medium_1)
+```
+### (ii). For the bacteria cultivated on medium 2, is there a significant difference in average growth between leaving for 18 hours as opposed to 12 hours?
+
+### $H_0: \mu_{18} = \mu_{12}$
+
+### $H_1: \mu_{18} \neq \mu_{12}$
+
+### Once again, the subscripts pertain to the hour. From the t-test and using a 5% significance level, we get a p-value of 0.0007118 < 0.05. Therefore, we reject the null hypothesis and accept the alternative hypothesis, indicating that there is a significant difference in avearge growth between leaving for 18 hours as opposed to 12 hours for medium 2
+
+```{r}
+medium_2_data <- subset(bacteria_data, Culture == "C2")
+t_test_medium_2 <- t.test(Growth ~ Time, data = medium_2_data)
+t_test_medium_2
+```
+### Question 2: Audiologists use standard lists of 50 words for test hearing in which the words were calibrated using subjects with normal hearing to make 50 words in the list equally hard to hear. The goal of the study is to compare four such lists. In the study, 24 subjects have listened to each of the 4 lists in a noisy background. The order in which they listened was randomized and the percentage of correctly recognized words is provided in the HearingTest dataset in Stat2Data package.
+
+### (a). Load the data and print the first 3 rows.
+
+```{r}
+library(Stat2Data)
+print(head(HearingTest, 3))
+```
+### (b). List any factors of interest and any nuisance factors in the study.
+
+### Factors of interest include List Type and Subject. Nuisance factors include background noise and randomized order in which they listened.
+
+### (c). Recognize the study design for the problem.
+
+### The study design is a repeated measures design.
+
+### (d). Fit a suitable model that would help answer the Audiologist's question.
+
+### $Y_{ij} = \mu + \tau_i + \beta_j + \epsilon_{ij}$
+
+```{r}
+library(Stat2Data)
+library(nlme)
+hearing_aov <- aov(Percent ~ List + Error(Subj/List), data = HearingTest)
+summary(hearing_aov)
+```
+### (e). Set up appropriate hypothesis test that would answer this research question. Based on your fitted model, state the conclusion at 5% significance level.
+
+### $H_0: \mu_{List 1} = \mu_{List 2} = \mu_{List 3} = \mu_{List 4}$
+
+### $H_1$: At least one $\mu_{List i}$ differs from the others
+
+### Based on the fitted model and a 5% significance level, the p-value we obtain is 0.285 > 0.5 so we fail to reject the null hypothesis, indicating that there is no statistically significant difference between the four lists of words.
+
+### (f). Audiologist is further interested in finding answers to below. Use R to produce any outputs you need to answer these questions. Using the generated outputs, provide statistical conclusions for the questions.
+
+### (i). Lists 1 and 2 were developed recently and 3 and 1 were lists he has been using for a while. Is the average rate of correct recognition significantly different between new and old lists?
+
+### $H_0: \mu_1 and \mu_2 = \mu_3 and \mu_4$
+
+### $H_1: \mu_1 and \mu_2 \neq \mu_3 and \mu_4$
+
+```{r}
+library(emmeans)
+bacteriaEm <- emmeans(model_virus, specs = c('Culture','Time'), data = bacteria_data)
+
+k1 <- c(1/2, 1/2, -1/2, -1/2)
+
+lincombos <- contrast(bacteriaEm, list(k1))
+
+confint(lincombos, adjust = 'bonferroni')
+```
+### Based on the results, 0 is outside the confidence interval. With 95% confidence, we can say that the average rate of correct recognition is significantly different between new and old lists.
+
+### (ii) Is there a significnat difference between two lists that were developed recently?
+
+```{r}
+library(emmeans)
+bacteriaEm <- emmeans(model_virus, specs = c('Culture','Time'), data = bacteria_data)
+
+k1 <- c(-1, 1, 0, 0)
+
+lincombos <- contrast(bacteriaEm, list(k1))
+
+confint(lincombos, adjust = 'bonferroni')
+```
+### Based on the results, 0 is inside the confidence interval for the new lists. With 95% confidence, we can say that the average rate of correct recognition is not significantly different between new lists.
+
+### Question 3: An experiment was conducted to investigate the effect of the paper color: Blue, Green, Orange on the response rate for questionnaires left on the windshield of vehicles in supermarket parking lots. A random sample of 15 supermarkets in the area were chosen for the study and each color was assigned at random to five lots. Response rate for the questionnaires were given in the quest.csv file.
+
+### (a). Make a side-by-side dotplot of the data and comment on your observations.
+
+```{r}
+library(ggplot2)
+library(ggbeeswarm)
+
+color_data <- read.csv('quest.csv')
+
+ggplot(color_data, aes(x = colour, y = rate, color = colour)) + geom_dotplot(binaxis = 'y', stackdir = 'center', stackratio = 5) + labs(title = "Side-By-Side Dotplot of Rate by Colour", x = "Colour", y = "Rate") + geom_beeswarm() +   scale_color_manual(values = c("Blue" = "blue", "Green" = "green", "Orange" = "orange"))
+```
+### The variability in the data from Blue to Green to Orange seem to be decreasing. 
+
+### (b). Fit a one-way anova model to see if there is a significant difference in the average response rate for at least one colour.
+
+```{r}
+anova_quest <- aov(rate ~ colour, data = color_data)
+summary(anova_quest)
+```
+### $H_0$: The average response rate is the same across all colors
+
+### $H_1$: There is a significant difference in the average response rate for at least one color
+
+### WIth a 5% significance level, the p-value is 0.684 > 0.05 so we fail to rejectthe null hypothesis, implying that there is no significant differece in the average response rate for at least one color.
+
+### (c). After the findings in part (b) an executive has made a comment saying that they should have simply printed the questionnaires on white paper. Suppose that you think size of the parking lot might be interfering any relationship there might be between the color of the paper and the average response rate. Use an appropriate graph that displays the relationship between response rate and the lot size for the color of the paper. Comment on your observations.
+
+```{r}
+library(ggplot2)
+
+ggplot(color_data, aes(x = lot, y = rate, color = colour)) +
+  geom_point(size = 3) +  # Scatter plot of the data points
+  geom_smooth(method = "lm", se = FALSE, aes(color = colour), linetype = "solid") +  # Add linear regression line
+  labs(title = "Response Rate vs Lot Size by Paper Color",
+       x = "Parking Lot Size",
+       y = "Response Rate") +
+  scale_color_manual(values = c("Blue" = "blue", "Green" = "green", "Orange" = "orange"))
+```
+### Response rate seems to decrease as the size of the parking lot increases for all colors
+
+### (d). Based on your observations, suggest an appropriate model. Write down the model and define all the terms in the context of the problem
+
+### $y_{ij} = \mu + \alpha_i + \beta (X_{ij} - \bar{X_{..}}) + \epsilon_{ij}$
+
+### $y_{ij}$: response rate of the jth paper color from ith parking lot size
+
+### $\mu$: overall mean
+
+### $\alpha_i$: effect from the ith parking lot size
+
+### $\beta$: regression coefficient that explains the relation between the response and the covariance
+
+### $\epsilon_{ij}$: random error
+
+### (e). Fit the model you suggested in part (d)
+
+```{r}
+library(car)
+color_data$Centlot <- scale(color_data$lot, center = TRUE , scale = TRUE)
+Qfit <- aov(rate ~ Centlot + colour, data = color_data)
+Anova(Qfit)
+```
+### (f) Based on the fitted model, does it look like the color of the paper matters? Explain your answer.
+
+### Based on the results, at the 95% confidence level, the p-value for colour is $9.9 \times 10^{8-} < 0.05 so we reject the null hypothesis and accept the alternative hypothesis. This suggests that there is a significant difference between the color of the questionnaire and the response rate. Also, the p-value for Centlot is $4.645 \times 10^{-12} < 0.05 so we reject the null hypothesis. This suggests that there is a significant difference between the size of the parking lot and the response rate.
+
+### Question 4: Two types of dementia are dementia with Lewy Bodies and ALzheimer's. To answer this problem, you will be using LewyBody2Groups data in Stat2Data package. The variable Type has two levels: DLB (only Lew Bodies dementia), DLB/AD (both). Variable MMSE measures the change in functional performance on the Mini Mental State Examination. We are interested in using MMSE to predict whether or not Alzheimer's disease is present.
+
+### (a). Load the data and print the first couple of observations.
+
+```{r}
+library(Stat2Data)
+data(LewyBody2Groups)
+print(head(LewyBody2Groups, 10))
+```
+### (b). Make an appropriate graph to display the relationship between MMSE and the type of dementia. Comment on your observations.
+
+```{r}
+library(ggplot2)
+
+ggplot(LewyBody2Groups, aes(x = Type, y = MMSE, fill = Type)) + 
+  geom_boxplot() + 
+  labs(title = "MMSE Scores by Type of Dementia", 
+       x = "Type of Dementia", 
+       y = "MMSE Score") +
+  theme_minimal() +
+  scale_fill_manual(values = c("skyblue", "orange"))
+```
+### (c). Fit a logistic regression model to this data. For this, you will have to first create a binary variable for the type. Use below code lines for this.
+
+```{r}
+Alz <- LewyBody2Groups
+Alz$TypeCode <- ifelse(Alz$Type == "DLB", 0, 1)
+log_reg_model <- glm(TypeCode ~ MMSE, data = Alz, family = binomial)
+summary(log_reg_model)
+```
+### (d). Based on the fitted model, does MMSE seem to be a significant predictor in determining the probability of Alzheimer's disease (use 5% significance level)? Explain your answer.
+
+### Based on the fitted model, the p-value for MMSE is 0.0275 < 0.05, making it a statistically significant predictor in determing the probability of Alzheimer's disease.
+
+### (e). Use the fitted model to estimate the odds of Alzheimer's disease if a patient's MMSE is -4.
+
+```{r}
+MMSE_value <- -4
+coefficients <- coef(log_reg_model)
+logit <- coefficients[1] + coefficients[2] * MMSE_value
+odds <- exp(logit)
+print(odds)
+```
+### The estimated odds of Alzheimer's disease if a patient's MMSE is -4 is 1.540882
+
+### (f). Use the model to estimate the probability of Alzheimer's disease if a patient's MMSE is -4.
+
+```{r}
+MMSE_value <- -4
+
+coefficients <- coef(log_reg_model)
+logit <- coefficients[1] + coefficients[2] * MMSE_value
+probability <- 1 / (1 + exp(-logit))
+print(probability)
+```
+### The estimated probability of Alzheimer's disease if a patient's MMSE is -4 is 0.6064358
+
+### (g). How much does the estimated odds change if the MMSE changes from -4 to -3?
+
+```{r}
+MMSE_value1 <- -4
+MMSE_value2 <- -3
+
+logit1 <- coefficients[1] + coefficients[2] * MMSE_value1
+logit2 <- coefficients[1] + coefficients[2] * MMSE_value2
+
+odds1 <- exp(logit1)
+odds2 <- exp(logit2)
+
+odds_change <- odds2 / odds1
+print(odds_change)
+```
+### If MMSE changes from -4 to -3, the estimated odds change by -0.7454918. 
