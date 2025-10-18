@@ -1,0 +1,177 @@
+---
+title: "STAT 300 Homework #7"
+output: html_notebook
+---
+
+### Question 1: Suppose we have data that includes information on movies that come out of Hollywood in 2011. We want to build a model to predict profitability, which is the percent of the budget recovered in profits. The dataset contains five explanatory variables and the details are as follows.
+
+### Variable Name: Description
+### Rotten Totatoes: Mean rating of critical reviews, from the Rotten Tomatoes website
+### AudienceScore: Average audience score, from the Rotten Tomatoes website
+### TheatersOpenWeek: Number of theaters showing the movie on opening weekend
+### BOAverageOpenWeek: Average box office revenue per theater opening week-end, in dollars
+### DomesticGross: Gross revenue in the US by the end of 2011, in millions of dollars
+
+```{r}
+library(corrplot)
+library(leaps)
+library(car)
+```
+
+
+```{r include-image, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 Homework 7 AdjR.png")
+```
+### Profitability ~ DomesticGross
+
+### Profitability ~ DomesticGross + RottenTomatoes
+
+### Profitability ~ DomesticGross + RottenTomatoes + AudienceScore
+
+### Question 2: A research group collected data from a random sample of women who were having trouble getting pregnant. Data is in Fertility.csv file. Variable description is as follows:
+
+### Age - Age in years MeanAFC - Average antral follicle count
+
+### FSH - Maximum follicle stimulating hormone level
+
+### E2 - Fertility level
+
+### MaxE2 - Maximum fertility level
+
+### MaxDailyGn - Maximum daily gonadotropin level
+
+### TotalGn - Total gonadotropin level
+
+### Oocytes - Number of egg cells
+
+### Embryos - Number of embryos
+
+### The research group is interested in developing a model to predict the MeanAFC.
+
+### (a). If you were to use the best subset approach to select a model, how many potential models should you check in the process?
+
+### $\displaystyle\sum_{k = 0}^{p} \binom{p}{k} = 2^p$ where p = number of predictors. In this case, we have 8 predictors so $\displaystyle\sum_{k = 0}^{8} \binom{8}{k} = 2^8$ = 256
+
+### (b). Use the AIC in bi-directional selection to obtain a model
+
+```{r}
+read.csv(file = 'Fertility.csv')
+fertility <- read.csv(file = 'Fertility.csv')
+nullModel <- lm(MeanAFC ~ 1, data = fertility)
+fullModel <- lm(MeanAFC ~ Age + FSH + E2 + MaxE2 + MaxDailyGn + TotalGn + Oocytes + Embryos, data = fertility)
+step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = 'both')
+```
+### The model is MeanAFC ~ Oocytes + MaxDailyGn + E2 + FSH
+
+### (c) Fit the model with the predictors you selected in part b. Write down the equation of the fitted regression model
+
+```{r}
+best_model <- lm(MeanAFC ~ Oocytes + MaxDailyGn + E2 + FSH, data = fertility)
+summary(best_model)
+```
+### The equation of the fitted regression model is 18.801458 + 0.378927(Oocytes) - 0.017469(MaxDailyGn) - 0.051418(E2) - 0.372004(FSH)
+
+### (d). Check the validity of the assumptions for the model you pick in part b
+
+```{r}
+pairs(fertility[, c('Oocytes', 'MaxDailyGn', 'E2', 'FSH')])
+FertCorMat <- cor(fertility, method = 'pearson')
+corrplot(FertCorMat, method = 'number')
+```
+### Linearity: Our model for predicting MeanAFC includes Oocytes, MaxDailyGn, E2, and FSH. Oocytes and Embryos have a moderate positive correlation while FSH has a moderate negative correlationa and E2 has a weak negative correlation. Based on these results, there may be problems with linearity.
+
+```{r}
+res <- resid(best_model)
+plot(fitted(best_model), res)
+```
+### Independence: It is mentioned that the data collected is from a random sample of women who were having trouble getting pregnant so we can assume independence
+
+
+```{r}
+qqnorm(res)
+qqline(res, col = 'red')
+```
+
+### Normality: Based on the QQ plot, a majority of points follow the reference line but towards the right, points curve upwards, suggesting skewed right residuals
+
+### Equal Variance: The points in the residual plot seem to be randomly scattered around the 0 horizontal line, suggesting constant variance
+
+### (e). What is the coefficient of determination for the model chose in part b?
+
+### $R^2$ = 0.2761
+
+### (f). Now use BIC in bi-directional selection to obtain a model
+
+```{r}
+step(nullModel, scope = list(lower = nullModel, upper = fullModel), direction = 'both', k = log(nrow(fertility)))
+```
+### The model is MeanAFC ~ Oocytes + MaxDailyGn
+
+### (g). Fit the model with the predictors you selected in part f. Write down the equation of the fitted regression model
+
+```{r}
+bic_best_model <- lm(MeanAFC ~ Oocytes + MaxDailyGn, data = fertility)
+summary(bic_best_model)
+```
+### The equation of the fitted regression model is 14.647697 + 0.418061(Oocytes) - 0.019523(MaxDailyGn)
+
+### (h). Check the validity of the assumptions for the model you picked in part f
+
+```{r}
+pairs(fertility[, c('Oocytes', 'MaxDailyGn')])
+FertCorMat <- cor(fertility, method = 'pearson')
+corrplot(FertCorMat, method = 'number')
+```
+### Linearity: Our model for predicting MeanAFC includes Oocytes and MaxDailyGn. Oocytes has a moderate positive correlation while MaxDailyGn has a moderate negative correlation. Based on correlation and residuals, we can assume linearity
+
+```{r}
+res <- resid(bic_best_model)
+plot(fitted(bic_best_model), res)
+```
+### Independence: It is mentioned that the data collected is from a random sample of women who were having trouble getting pregnant so we can assume independence
+
+```{r}
+qqnorm(res)
+qqline(res, col = 'red')
+```
+### Normality: Once again, a majority of points follow the reference line but towards the right, points curve upwards, suggesting skewed right residuals
+
+### Equal Variance: The points in the residual plot seem to be randomly scattered around the 0 horizontal line, suggesting constant variance
+
+### (i). What is the coefficient of determination for the model chosen in part f?
+
+### $R^2$ = 0.2596
+
+### (j) To see if the model chosen is the same with step wise selection with BIC, use best subset approach with BIC. Do you still get the same model?
+
+```{r}
+best_subset <- regsubsets(MeanAFC ~ ., data = fertility, nvmax = ncol(fertility) - 1)
+summary(best_subset)
+```
+### WIth AIC, I got a best model with 4 predictors with MeanAFC ~ Oocytes + MaxDailyGn + E2 + FSH. The best model with the subset approach is the same.
+
+### With BIC, I got a best model with 2 predictors with MeanAFC ~ Oocytes + MaxDailyGn. The best model with the subset approach is the same.
+
+### (k). Check the possible multicollinearity of the above chosen models. Comment on them.
+
+```{r}
+FertFit2 <- lm(MeanAFC ~ MaxDailyGn + Oocytes, data = fertility)
+vif(FertFit2)
+FertFit3 <- lm(MeanAFC ~ E2 + MaxDailyGn + Oocytes, data = fertility)
+vif(FertFit3)
+FertFit4 <- lm(MeanAFC ~ FSH + E2 + MaxDailyGn + Oocytes, data = fertility)
+vif(FertFit4)
+FertFit5 <- lm(MeanAFC ~ FSH + E2 + MaxDailyGn + Oocytes + Embryos, data = fertility)
+vif(FertFit5)
+FertFit6 <- lm(MeanAFC ~ FSH + E2 + MaxDailyGn + TotalGn + Oocytes + Embryos, data = fertility)
+vif(FertFit6)
+FertFit7 <- lm(MeanAFC ~ Age + FSH + E2 + MaxDailyGn + TotalGn + Oocytes + Embryos, data = fertility)
+vif(FertFit7)
+FertFit8 <- lm(MeanAFC ~ Age + FSH + E2 + MaxE2 + MaxDailyGn + TotalGn + Oocytes + Embryos, data = fertility)
+vif(FertFit8)
+```
+### The models obtained using AIC and BIC had 4 predictors and 2 predictors respectively. For both models, all VIF values for predictors are close to 1. As for the models with 6, 7, and 8 predictors, there are VIF values greater than 5, suggesting multicollinearity
+
+### (l). Using the models you got from the above different approaches, recommend a final model. When you provide recommendations consider, $R^2$ values, validity of the assumptions, prediction accuracy, multicollinearity.
+
+### I would recommend the model obtained with BIC as a final model. Although it has a smaller coefficient of determination than the model obtained using AIC, it is quite minimal. Additionally, it has more valid assumptions (linearity, independence, and equal variance). Additionally, all VIF values for predictor variables were close to one so multicollinearity is not a problem.
