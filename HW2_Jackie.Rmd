@@ -1,0 +1,155 @@
+---
+title: "Homework #2"
+author: Jackie Yang
+output: html_notebook
+---
+
+### Question 1: Consider the fitted regression equation y-hat = 100 + 15x. Answer below
+
+### (a). What is the value of the sample slope?
+
+### 15
+
+### (b). What is the predicted response when x = 0?
+
+### y-hat = 100
+
+### (c). By how much is the response expected to increase for a unit increment of x?
+
+### 15
+
+### (d). If x is increase by 10 units, by how much would you expect the response to increase?
+
+### 150
+
+### Question 2: For which of the following regression assumption(s) cannot be verified from a residual plot?
+
+### (a). Linearity (b). Constant variance (c). Independence (d). Zero mean
+
+### (c). Independence
+
+### Question 3: The number of calories and the grams of sugar per serving is measured for 36 breakfast cereals. The data is in the cereal.csv file. We are interested in predicting calories using the sugar content.
+
+### (a). Make a scatterplot and comment on your observations
+
+```{r}
+read.csv(file = "Cereal.csv")
+cereal <- read.csv(file = "Cereal.csv")
+ggplot(cereal, aes(x = Sugar, y = Calories)) + geom_point() + labs(x = "Sugar (grams)", y = "Calories", title = "Calories vs. Sugar Content")
+```
+
+### Observations: There seems to be a horizontal line that connects a lot of points (110 calories). This could indicate that sugar does not have an impact on calories. Some cereals have 0 grams of sugar but vary in amount of calories. 
+
+### (b). Find the least squares regression line for predicting calories based on the sugar content. Include your output and then write down (type) the least squares regression line
+
+```{r}
+lm(Calories ~ Sugar, data = cereal)
+```
+
+### y-hat = 2.481x + 87.428
+
+### (c). Make a scatterplot and overlay the fitted regression model
+
+```{r}
+ggplot(cereal, aes(x = Sugar, y = Calories)) + geom_point() + geom_smooth(method = 'lm') + labs(x = "Sugar (grams)", y = "Calories", title = "Calorie Count of Cereals Based on Sugar Content")
+```
+
+### (d). Interpret the slope in the context of this problem
+
+### The slope is the predicted amount of caloric increase for each gram of sugar
+
+### (e). Interpret the intercept in the context of this problem
+
+### The intercept is the predicted amount of calories for cereal that contain 0 grams of sugar
+
+### (f). Cheerios has 1 gram of sugar with 110 calories. Find the residual for this observation
+
+### Cheerio Predicted = 2.481(1) + 87.428 = 2.481 + 87.428 = 89.909 calories
+### Cheerio Actual = 110 calories
+### Cheerio Residual = 110 - 89.909 = 20.091 calories
+
+### (g). Does the linear regression model appear to be a good summary of the relationship between calories and sugar content of breakfast cereal? Use appropriate graphs to justify your answer.
+
+### No because the prediction for Cheerios was not accurate and the scatterplot contains many high leverage points
+
+### Question 4: The data playbill.csv provides weekly reports on the box office ticket sales for plays on Broadway in New York. Provided data is for the week October 11-17, 2004 (referred to below as the current week). The data are in the form of the gross box office results for the current week and the gross box office results for the previous week  (i.e. October 3-10, 2004)
+
+### (a). What would be the response and the predictor variable in this data?
+
+### The response variable would be gross box office results for the current week and the predictor variable would be the gross box office results for the previous week
+
+### (b). Make a scatter plot of the data to display the relationship between the two variables. Include the plot and comment on what you can see
+
+```{r}
+read.csv(file = "playbill.csv")
+box_office <- read.csv(file = "playbill.csv")
+ggplot(box_office, aes(x = LastWeek, y = CurrentWeek)) + geom_point() + labs(x = "Last Week Gross", y = "Current Week Gross", title = "Last Week vs. Current Week Gross Box Office Results")
+```
+
+### There appears to be a strong positive correlation between the two variables
+
+### (c). Use R to obtain the least squares regression line for predicting this weeks' gross box office results from the previous week. Attach any R outputs.
+
+```{r}
+lm(LastWeek ~ CurrentWeek, data = box_office)
+```
+
+### (d). Write the equation of the least squares regression line
+
+### y-hat = 1.015x - 4764.213
+
+### (e). Make another scatterplot of the data and overlay the fitted regression line on the scatterplot. Use your favorite colour for the fitted line.
+
+```{r}
+ggplot(box_office, aes(x = LastWeek, y = CurrentWeek)) + geom_point(color = "royalblue") + geom_smooth(method = "lm") + labs(x = "Last Week Gross", y = "Current Week Gross", title = "Last Week vs. Current Week Gross Box Office Results")
+```
+
+### Question 5: The table compares GDP (Gross Domestic Product) per Capita to Life Satisfaction: definitions of both are below. The goal is to explore the relationship between money and happiness. Life Satisfaction scaled from 0 to 10 with zero being the least and 10 being best satisfied. GDP per Capita for 2015 provided by International Monetary Fund. The gross domestic product of a nation divided by population of that nation.
+
+### (a). What is the response and the explanatory variable in this setting?
+
+### The response variable is level of happiness and the explanatory variable is GDP
+
+### (b). Make a scatter plot of the data and comment on the relationship
+
+```{r}
+read.csv(file = "GDP_vs_Satisfaction.csv")
+gdp_satisfaction <- read.csv(file = "GDP_vs_Satisfaction.csv")
+ggplot(gdp_satisfaction, aes(x = GDP, y = Satisfaction)) + geom_point() + labs(x = "GDP", y = "Satisfaction Level", title = "GDP vs Satisfaction Level")
+```
+
+### There seems to be a moderate positive correlation between the two variables along with an outlier
+
+### (c). Calculate the sample correlation between the two variables
+
+```{r}
+cor(gdp_satisfaction$GDP, gdp_satisfaction$Satisfaction)
+```
+
+### (d). Regardless of you opinion in part (b), fit a simple linear regression model to this data. Show the R output of the SLR fit and the scatterplot with fitted line overlaid
+
+```{r}
+ggplot(gdp_satisfaction, aes(x = GDP, y = Satisfaction)) + geom_point() + geom_smooth(method = "lm") + labs(x = "GDP", y = "Satisfaction Level", title = "GDP vs Satisfaction Level")
+```
+
+### (e). What is the coefficient of determination for the model. Interpret this value in the context of the problem
+
+```{r}
+gdp.lm = lm(GDP ~ Satisfaction, data = gdp_satisfaction)
+summary(gdp.lm)$r.squared
+```
+### (f). In the original data, observation number 21 ("Luxembourg") seems to be an outlier. Use the below code line to remove that observation from the dataset. Then re-fit the regression model to the reduced dataset. Include the R output and the scatterplot of the reduced data with fitted model overlaid
+
+```{r}
+gdp_satisfaction_new <- gdp_satisfaction[-21,]
+ggplot(gdp_satisfaction_new, aes(x = GDP, y = Satisfaction)) + geom_point() + geom_smooth(method = "lm") + labs(x = "GDP", y = "Satisfaction Level", title = "GDP vs Satisfaction Level")
+```
+
+### (g). Does it seem like the model fit has improved once "Luxembourg" was removed form the dataset. Explain.
+
+```{r}
+gdp.lm = lm(GDP ~ Satisfaction, data = gdp_satisfaction_new)
+summary(gdp.lm)$r.squared
+```
+ 
+### Yes because the coefficient of determination increased, making the relationship between the two variables stronger
