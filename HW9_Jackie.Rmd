@@ -1,0 +1,121 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Question 1: Suppose you want to compare the average ages of cars among faculty, students and staff at Penn State. You take a random sample of 200 people who have parking permits and ask how old is their primary car? You ask your friends in STAT 300 about using ANOVA to analyze this data and below are some responses you received. Indicate how you would respond to each below. Your response should have explanation beyond simply yes/no, true/false.
+
+### (a). You cannot use ANOVA as there are 3 groups.
+
+### False. ANOVA is used to compare two or more population means so 3 is valid here.
+
+### (b). You cannot use ANOVA on this data because the response is quantitative.
+
+### False. ANOVA uses quantitative response variables.
+
+### (c). You cannot use ANOVA for this data because the sample size for the three groups will probably be different
+
+### False. ANOVA does not require equal sample sizes across groups. 
+
+### (d). You can do calculations for ANOVA on this data even though the sample size in groups will be different, but you cannot generalize the findings of the results to the population of people (staff, faculty, and students) with parking permits at Penn State.
+
+### False. Although you can do calculations for ANOVA even though sample size across groups are different, you can generalize the findings if the method of sampling is random sampling and checking assumptions of linearity, independence, normality, and equal variance.
+
+### Question 2: Random sample of four counties taken from small, medium, and large counties in Iowa (total of 12 counties taken at random). We are interested if poverty rate in Iowa is associated with the size of the county. Below shown is a dotplot of the data. Does this plot raise any concerns with respect to use of ANOVA. Explain based on what you see in the dotplot.
+
+```{r}
+library(knitr)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r include-image, echo = FALSE}
+knitr::include_graphics("C:/Users/420ja/OneDrive/Pictures/Screenshots/STAT 300 HW #9.png")
+```
+### Without any extra information, we cannot determine linearity as we do not have a graph of residuals. We can assume independence as the method is random sampling. We cannot determine normality as we do not have a QQ graph. As for variance, it seems like the variance is small for small counties and larger for medium and large counties
+
+### Question 3: The Energy Information Administration gathers data on residential energy consumption. Random samples of households were taken from four regions in the U.S. Data is provided in energy.csv file.
+
+### (a) Make appropriate graph(s) to see the relationship between the energy consumption and the region. Comment on your observations.
+
+```{r}
+read.csv(file = 'energy.csv')
+energy <- read.csv(file = 'energy.csv')
+```
+```{r}
+northeast_energy <- filter(energy, Region == 'Northeast')
+midwest_energy <- filter(energy, Region == 'Midwest')
+south_energy <- filter(energy, Region == 'South')
+west_energy <- filter(energy, Region == 'West')
+
+ggplot(northeast_energy, aes(x = Consumption)) + geom_dotplot()
+ggplot(midwest_energy, aes(x = Consumption)) + geom_dotplot()
+ggplot(south_energy, aes(x = Consumption)) + geom_dotplot()
+ggplot(west_energy, aes(x = Consumption)) + geom_dotplot()
+```
+### The dotplots for the Northeast and Midwest regions seem to be fairly normally distributed. The dotplot for the South region seems to be slightly right-skewed. Lastly, the dotplot for the West region seems to be left-skewed.
+
+### (b). write down the one-way ANOVA model that you think will explain the relationship between the energy consumption and the region in the population. Define any terms you have used.
+
+### $y_{ij} = \mu + \alpha_i + \epsilon_{ij}$
+
+### $y_{ij}$ = jth observation from ith group
+
+### $\mu$ = overall mean
+
+### $\alpha_i$ = ith group (region)
+
+### $\epsilon_{ij}$ = random error associated with jth observation in the ith group
+
+### (c). Suppose we want to see whether or not there is a difference in average energy consumption among the four regions.
+
+### (i). Set up the appropriate null and alternate hypothesis.
+
+### $$H_0: \mu_1 = \mu_2 = ... = \mu_k$$
+
+### $$H_1: \text{Some } \mu_i \neq \mu_k$$
+
+### (ii). Fit the model and generate the R output.
+
+```{r}
+energy_anova <- aov(Consumption ~ Region, data = energy)
+summary(energy_anova)
+```
+### (iii). Check the validity of the assumptions of the fitted model.
+
+### Under the null hypothesis, p-value = P(F>122.8) = $2 \times 10^{-16}$, so we reject the null hypothesis at 5% significance level.
+
+```{r}
+energy_model <- lm(Consumption ~ Region, data = energy)
+summary(energy_model)
+
+res <- resid(energy_model)
+plot(fitted(energy_model), res)
+
+qqnorm(res)
+qqline(res, col = 'red')
+```
+### Linearity: The points in the residual plot seem to be scattered within a constant band so we can assume linearity.
+
+### Independence: Random samples of households were taken from four regions in the U.S. so we can assume errors are independent.
+
+### Normality: In the QQ plot, the points follow the reference line so we can assume normality.
+
+### Equal Variance: In the residual plot, points are evenly spread out around the zero horizontal line so we can assume equal variance.
+
+### (iv). Write the final conclusion in the context of the problem.
+
+### The final conclusion is that there is a difference in average energy consumption among the four regions.
+
+### (d). Conduct any post-hoc analysis that might be relevant. When conducting the post-hoc analysis, use a moderate approach (i.e. not too conservative or not too libearl)
+
+### Based off this information, we should use Tukey's HSD.
+
+```{r}
+tukey <- TukeyHSD(energy_anova, method = 'hsd', conf.level = 0.95)
+print(tukey)
+plot(tukey)
+```
+### (e). Summarize your findings from the post-hoc analysis.
+
+### Every interval except West-South is less than 0, suggesting that the differences in means could be zero between the West and South regions. This indicates that there is a statistically significant difference between the group means at 5% significane level between all groups except for the West and South regions.
